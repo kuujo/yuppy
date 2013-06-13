@@ -11,7 +11,7 @@ if __name__ == '__main__':
     author_email='jordan.halterman@gmail.com',
     url='https://github.com/jordanhalterman/extreme-python',
     keywords=['extreme', 'oop'],
-    py_modules=['extreme'],
+    py_modules=['xpy'],
     classifiers=[
       'Development Status :: 3 - Alpha',
       'Environment :: Console',
