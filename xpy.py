@@ -191,6 +191,13 @@ class PublicMethod(_Method):
   """
   A public method.
   """
+  def __get__(self, instance, owner):
+    """
+    Gets the attribute value.
+    """
+    def wrap(*args, **kwargs):
+      return self.__callback__(instance, *args, **kwargs)
+    return wrap
 
 class PublicMember(_Variable):
   """
@@ -534,7 +541,7 @@ def const(value):
 
 def static(*args, **kwargs):
   if len(args) == 1 and len(kwargs) == 0:
-    if inspect.ismethod(args[0]):
+    if callable(args[0]):
       return StaticMethod(args[0])
     else:
       if isinstance(args[0], PublicMethod):
@@ -574,7 +581,7 @@ def static(*args, **kwargs):
 
 def public(*args, **kwargs):
   if len(args) == 1 and len(kwargs) == 0:
-    if inspect.ismethod(args[0]):
+    if callable(args[0]):
       return PublicMethod(args[0])
     else:
       if isinstance(args[0], StaticMethod):
@@ -594,7 +601,7 @@ def public(*args, **kwargs):
 
 def protected(*args, **kwargs):
   if len(args) == 1 and len(kwargs) == 0:
-    if inspect.ismethod(args[0]):
+    if callable(args[0]):
       return ProtectedMethod(args[0])
     else:
       if isinstance(args[0], StaticMethod):
@@ -614,7 +621,7 @@ def protected(*args, **kwargs):
 
 def private(*args, **kwargs):
   if len(args) == 1 and len(kwargs) == 0:
-    if inspect.ismethod(args[0]):
+    if callable(args[0]):
       return PrivateMethod(args[0])
     else:
       if isinstance(args[0], StaticMethod):
