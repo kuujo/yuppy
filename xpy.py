@@ -1,10 +1,11 @@
-import inspect, re
+import inspect, gc
 
 __all__ = [
   'Object',
   'const',
   'static',
   'public',
+  'protected',
   'private',
 ]
 
@@ -14,29 +15,16 @@ class _Attribute(object):
   """
   def __init__(self):
     self.__name__ = None
+    self.__parent__ = None
 
-  def _get_caller(self):
+  def _get_local_caller(self):
     """
     Returns the calling frame.
     """
-    def is_object(obj):
-      def find_base(cls, bases):
-        if cls in bases:
-          return True
-        else:
-          for base in bases:
-            if find_base(cls, base.__bases__):
-              return True
-        return False
-      try:
-        return find_base(Object, obj.__class__.__bases__)
-      except AttributeError:
-        return False
-
     i, selftext = 0, 'self.%s' % (self.__name__,)
     stacks = iter(inspect.stack())
     callingframe = None
-    while i < 20 and callingframe is None:
+    while i < 5 and callingframe is None:
       try:
         stack = next(stacks)
       except StopIteration:
@@ -50,16 +38,20 @@ class _Attribute(object):
         # If this appears to be a call from within the Object class, get the calling
         # frame and extract the calling instance (first argument).
         instance = stack[0].f_locals['self']
-        if is_object(instance):
+        if isinstance(instance, Object):
           callingframe = next(stacks)
           try:
             firstarg = callingframe[0].f_code.co_varnames[0]
           except IndexError:
             return None
           else:
-            for i in range(len(callingframe[4])):
-              if '%s.%s' % (firstarg, self.__name__) in callingframe[4][i]:
-                return callingframe[0].f_locals[firstarg]
+            if firstarg == 'self':
+              firstinst = callingframe[0].f_locals[firstarg]
+              if isinstance(firstinst, Object):
+                for i in range(len(callingframe[4])):
+                  if 'self.%s' % (self.__name__,) in callingframe[4][i] or '%s.%s' % (self.__parent__, self.__name__) in callingframe[4][i]:
+                    return firstinst
+            return None
       i += 1
     return None
 
@@ -139,11 +131,61 @@ class StaticMethod(_Method):
   """
   A static method.
   """
+  def __get__(self, instance, owner=None):
+    """
+    Gets the attribute value.
+    """
+    if owner is None:
+      owner = instance.__class__
+    def wrap(*args, **kwargs):
+      return self.__callback__(owner, *args, **kwargs)
+    return wrap
 
 class StaticMember(_Variable):
   """
   A static member.
   """
+  def __get__(self, instance, owner=None):
+    """
+    Gets the attribute value.
+    """
+    if owner is None:
+      owner = instance.__class__
+    try:
+      owner.__properties__
+    except AttributeError:
+      owner.__properties__ = {}
+    try:
+      return owner.__properties__[self.__name__]
+    except KeyError:
+      if self.__hasdefault__:
+        return self.__default__
+      raise AttributeError("%s object %s not found." % (owner.__class__.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """
+    Sets the attribute value.
+    """
+    owner = instance.__class__
+    try:
+      owner.__properties__
+    except AttributeError:
+      owner.__properties__ = {}
+    owner.__properties__[self.__name__] = self._validate(value)
+
+  def __del__(self, instance=None):
+    """
+    Deletes the attribute value.
+    """
+    if instance is None:
+      return
+    owner = instance.__class__
+    try:
+      del owner.__properties__[self.__name__]
+    except AttributeError:
+      pass
+    except KeyError:
+      raise AttributeError("%s object attribute %s not found." % (owner.__class__.__name__, self.__name__))
 
 class PublicMethod(_Method):
   """
@@ -179,10 +221,12 @@ class PublicMember(_Variable):
       instance.__properties__ = {}
     instance.__properties__[self.__name__] = self._validate(value)
 
-  def __del__(self, instance):
+  def __del__(self, instance=None):
     """
     Deletes the attribute value.
     """
+    if instance is None:
+      return
     try:
       del instance.__properties__[self.__name__]
     except AttributeError:
@@ -190,20 +234,77 @@ class PublicMember(_Variable):
     except KeyError:
       raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
 
-class StaticPublicMethod(_Method):
+class StaticPublicMethod(StaticMethod):
   """
   A static public method.
+  """
+
+class StaticPublicMember(StaticMember):
+  """
+  A static public member.
+  """
+
+class PrivateMethod(_Method):
+  """
+  A protected method.
   """
   def __get__(self, instance, owner=None):
     if owner is None:
       owner = instance.__class__
-    def wrap(*args, **kwargs):
-      return self.__callback__(owner, *args, **kwargs)
-    return wrap
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
+    if caller.__class__.__name__ == instance.__class__.__name__:
+      def wrap(*args, **kwargs):
+        return self.__callback__(owner, *args, **kwargs)
+      return wrap
+    raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
 
-class StaticPublicMember(_Variable):
+class ProtectedMember(_Variable):
   """
-  A static public member.
+  A protected member.
+  """
+  def __get__(self, instance, owner):
+    """
+    Gets the attribute value.
+    """
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
+    for cls in inspect.getmro(caller.__class__):
+      if cls.__name__ == self.__parent__:
+        try:
+          instance.__properties__
+        except AttributeError:
+          instance.__properties__ = {}
+        try:
+          return instance.__properties__[self.__name__]
+        except KeyError:
+          if self.__hasdefault__:
+            return self.__default__
+          raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """
+    Sets the attribute value.
+    """
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
+    for cls in inspect.getmro(caller.__class__):
+      if cls.__name__ == self.__parent__:
+        try:
+          instance.__properties__
+        except AttributeError:
+          instance.__properties__ = {}
+        instance.__properties__[self.__name__] = self._validate(value)
+        return
+    raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__,))
+
+class StaticProtectedMethod(_Method):
+  """
+  A static protected method.
   """
   def __get__(self, instance, owner=None):
     """
@@ -211,39 +312,59 @@ class StaticPublicMember(_Variable):
     """
     if owner is None:
       owner = instance.__class__
-    try:
-      owner.__properties__
-    except AttributeError:
-      owner.__properties__ = {}
-    try:
-      return owner.__properties__[self.__name__]
-    except KeyError:
-      if self.__hasdefault__:
-        return self.__default__
-      raise AttributeError("%s object %s not found." % (owner.__class__.__name__, self.__name__))
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (owner.__name__, self.__name__))
+    for cls in inspect.getmro(caller.__class__):
+      if cls.__name__ == self.__parent__:
+        def wrap(*args, **kwargs):
+          return self.__callback__(owner, *args, **kwargs)
+        return wrap
+    raise AttributeError("%s attribute %s not found." % (owner.__name__, self.__name__))
+
+class StaticProtectedMember(_Variable):
+  """
+  A static protected member
+  """
+  def __get__(self, instance, owner=None):
+    """
+    Gets the attribute value.
+    """
+    if owner is None:
+      owner = instance.__class__
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (owner.__name__, self.__name__))
+    for cls in inspect.getmro(caller.__class__):
+      if cls.__name__ == self.__parent__:
+        try:
+          owner.__properties__
+        except AttributeError:
+          owner.__properties__ = {}
+        try:
+          return owner.__properties__[self.__name__]
+        except KeyError:
+          if self.__hasdefault__:
+            return self.__default__
+    raise AttributeError("%s attribute %s not found." % (owner.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """
     Sets the attribute value.
     """
     owner = instance.__class__
-    try:
-      owner.__properties__
-    except AttributeError:
-      owner.__properties__ = {}
-    owner.__properties__[self.__name__] = self._validate(value)
-
-  def __del__(self, instance):
-    """
-    Deletes the attribute value.
-    """
-    owner = instance.__class__
-    try:
-      del owner.__properties__[self.__name__]
-    except AttributeError:
-      pass
-    except KeyError:
-      raise AttributeError("%s object attribute %s not found." % (owner.__class__.__name__, self.__name__))
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (owner.__name__, self.__name__))
+    for cls in inspect.getmro(caller.__class__):
+      if cls.__name__ == self.__parent__:
+        try:
+          owner.__properties__
+        except AttributeError:
+          owner.__properties__ = {}
+        owner.__properties__[self.__name__] = self._validate(value)
+        return
+    raise AttributeError("%s attribute %s not found." % (owner.__name__, self.__name__,))
 
 class PrivateMethod(_Method):
   """
@@ -252,7 +373,7 @@ class PrivateMethod(_Method):
   def __get__(self, instance, owner=None):
     if owner is None:
       owner = instance.__class__
-    caller = self._get_caller()
+    caller = self._get_local_caller()
     if caller is None:
       raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
     if caller.__class__.__name__ == instance.__class__.__name:
@@ -269,7 +390,7 @@ class PrivateMember(_Variable):
     """
     Gets the attribute value.
     """
-    caller = self._get_caller()
+    caller = self._get_local_caller()
     if caller is None:
       raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
     if caller.__class__.__name__ == instance.__class__.__name__:
@@ -289,7 +410,9 @@ class PrivateMember(_Variable):
     """
     Sets the attribute value.
     """
-    caller = self._get_caller()
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__))
     if caller.__class__.__name__ == instance.__class__.__name__:
       try:
         instance.__properties__
@@ -297,17 +420,68 @@ class PrivateMember(_Variable):
         instance.__properties__ = {}
       instance.__properties__[self.__name__] = self._validate(value)
     else:
-      raise AttributeError("%s attribute %s not found." % (instance.__class__.__name__, self.__name__,))
+      raise AttributeError("%s object attribute %s not found." % (instance.__class__.__name__, self.__name__,))
 
 class StaticPrivateMethod(_Method):
   """
   A static private method.
   """
+  def __get__(self, instance, owner=None):
+    """
+    Gets the attribute value.
+    """
+    if owner is None:
+      owner = instance.__class__
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (owner.__name__, self.__name__))
+    if caller.__class__.__name__ == owner.__name__:
+      def wrap(*args, **kwargs):
+        return self.__callback__(owner, *args, **kwargs)
+      return wrap
+    raise AttributeError("%s attribute %s not found." % (owner.__name__, self.__name__))
 
 class StaticPrivateMember(_Variable):
   """
   A static private member
   """
+  def __get__(self, instance, owner=None):
+    """
+    Gets the attribute value.
+    """
+    if owner is None:
+      owner = instance.__class__
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (owner.__name__, self.__name__))
+    if caller.__class__.__name__ == owner.__name__:
+      try:
+        owner.__properties__
+      except AttributeError:
+        owner.__properties__ = {}
+      try:
+        return owner.__properties__[self.__name__]
+      except KeyError:
+        if self.__hasdefault__:
+          return self.__default__
+    raise AttributeError("%s attribute %s not found." % (owner.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """
+    Sets the attribute value.
+    """
+    owner = instance.__class__
+    caller = self._get_local_caller()
+    if caller is None:
+      raise AttributeError("%s object attribute %s not found." % (owner.__name__, self.__name__))
+    if caller.__class__.__name__ == owner.__name__:
+      try:
+        owner.__properties__
+      except AttributeError:
+        owner.__properties__ = {}
+      owner.__properties__[self.__name__] = self._validate(value)
+    else:
+      raise AttributeError("%s attribute %s not found." % (owner.__name__, self.__name__,))
 
 class _ObjectType(type):
   """
@@ -317,9 +491,15 @@ class _ObjectType(type):
     super(_ObjectType, cls).__init__(name, bases, d)
     attributes = {}
     for key in d.keys():
-      if isinstance(d[key], _Attribute):
+      if not (key.startswith('__') and key.endswith('__')):
+        if not isinstance(d[key], _Attribute):
+          if callable(d[key]):
+            d[key] = public(d[key])
+          else:
+            d[key] = public(default=d[key])
         attributes[key] = d[key]
         attributes[key].__name__ = key
+        attributes[key].__parent__ = cls
         delattr(cls, key)
     setattr(cls, '__attributes__', attributes)
 
@@ -359,18 +539,34 @@ def static(*args, **kwargs):
     else:
       if isinstance(args[0], PublicMethod):
         return StaticPublicMethod(args[0].__callback__)
+      elif isinstance(args[0], ProtectedMethod):
+        return StaticProtectedMethod(args[0].__callback__)
       elif isinstance(args[0], PrivateMethod):
         return StaticPrivateMethod(args[0].__callback__)
       elif isinstance(args[0], PublicMember):
         kwargs = dict(type=args[0].__type__, validate=args[0].__validate__)
         if args[0].__hasdefault__:
           kwargs['default'] = args[0].__default__
-        return StaticPublicMember(**kwargs)
+        member = StaticPublicMember(**kwargs)
+        member.__name__ = args[0].__name__
+        member.__parent__ = args[0].__parent__
+        return member
+      elif isinstance(args[0], ProtectedMember):
+        kwargs = dict(type=args[0].__type__, validate=args[0].__validate__)
+        if args[0].__hasdefault__:
+          kwargs['default'] = args[0].__default__
+        member = StaticProtectedMember(**kwargs)
+        member.__name__ = args[0].__name__
+        member.__parent__ = args[0].__parent__
+        return member
       elif isinstance(args[0], PrivateMember):
         kwargs = dict(type=args[0].__type__, validate=args[0].__validate__)
         if args[0].__hasdefault__:
           kwargs['default'] = args[0].__default__
-        return StaticPrivateMember(**kwargs)
+        member = StaticPrivateMember(**kwargs)
+        member.__name__ = args[0].__name__
+        member.__parent__ = args[0].__parent__
+        return member
       else:
         return StaticMember(args[0])
   else:
@@ -387,11 +583,34 @@ def public(*args, **kwargs):
         kwargs = dict(type=args[0].__type__, validate=args[0].__validate__)
         if args[0].__hasdefault__:
           kwargs['default'] = args[0].__default__
-        return StaticPublicMember(**kwargs)
+        member = StaticPublicMember(**kwargs)
+        member.__name__ = args[0].__name__
+        member.__parent__ = args[0].__parent__
+        return member
       else:
         return PublicMember(args[0])
   else:
     return PublicMember(*args, **kwargs)
+
+def protected(*args, **kwargs):
+  if len(args) == 1 and len(kwargs) == 0:
+    if inspect.ismethod(args[0]):
+      return ProtectedMethod(args[0])
+    else:
+      if isinstance(args[0], StaticMethod):
+        return StaticProtectedMethod(args[0].__callback__)
+      elif isinstance(args[0], StaticMember):
+        kwargs = dict(type=args[0].__type__, validate=args[0].__validate__)
+        if args[0].__hasdefault__:
+          kwargs['default'] = args[0].__default__
+        member = StaticProtectedMember(**kwargs)
+        member.__name__ = args[0].__name__
+        member.__parent__ = args[0].__parent__
+        return member
+      else:
+        return ProtectedMember(args[0])
+  else:
+    return ProtectedMember(*args, **kwargs)
 
 def private(*args, **kwargs):
   if len(args) == 1 and len(kwargs) == 0:
@@ -404,7 +623,10 @@ def private(*args, **kwargs):
         kwargs = dict(type=args[0].__type__, validate=args[0].__validate__)
         if args[0].__hasdefault__:
           kwargs['default'] = args[0].__default__
-        return StaticPrivateMember(**kwargs)
+        member = StaticPrivateMember(**kwargs)
+        member.__name__ = args[0].__name__
+        member.__parent__ = args[0].__parent__
+        return member
       else:
         return PrivateMember(args[0])
   else:
