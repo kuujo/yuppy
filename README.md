@@ -434,4 +434,4 @@ is provided.
 AttributeError: Invalid attribute value for 'weight'.
 ```
 
-_Copyright (c) 2013 Jordan Halterman
+_Copyright (c) 2013 Jordan Halterman_
