@@ -109,7 +109,7 @@ from xpy import *
 
 class Apple(Object):
   """An abstract apple."""
-  weight = private(type=float)
+  weight = var(type=float)
 
   def __init__(self, weight):
     self.weight = weight
@@ -122,8 +122,88 @@ is provided.
 
 ```python
 >>> apple = Apple(1)
->>> apple.weight
-AttributeError: Cannot access private Apple object member weight.
 >>> apple = Apple('one')
 AttributeError: Invalid attribute value for weight.
+```
+
+#### Private Members
+Private members are variables that can only be accessed from within a class.
+They support data integrity by preventing class users from altering internal attribute.
+With XPy we can decorate any class member with `private` to hide it from outside access.
+Note that XPy variables must be defined within the class definition, not
+arbitrarily defined within class code. This is common in other object-oriented
+languages as well.
+
+```python
+from xpy import *
+
+class Apple(Object):
+  """An abstract apple."""
+  weight = private(type=float, default=None)
+
+  def __init__(self, weight):
+    self.weight = weight
+
+  @private
+  def _get_weight(self):
+    return self.weight
+
+  def get_weight(self):
+    return self._get_weight()
+```
+
+Now, if we create a new `Apple` instance and try to access its attributes
+from outside the class we will fail. However, we'll see that access from
+within the class works just fine.
+
+```python
+>>> apple = Apple(2.5)
+>>> apple.weight
+AttributeError: Cannot access private Apple object member weight.
+>>> apple._get_weight()
+AttributeError: Cannot access private Apple object member _get_weight.
+>>> apple.get_weight()
+2.5
+```
+
+#### Protected Members
+Protected members are variables that can be accessed only from within a
+class or a sub-class of the declaring class. Thus, while protected
+members have more relaxed access restriction, values are still hidden
+from outside users. With XPy we can use the `protected` decorator to
+declare any class member protected.
+
+```python
+from xpy import *
+
+class Apple(Object):
+  """An abstract apple."""
+  weight = private(type=float, default=None)
+
+  def __init__(self, weight):
+    self.weight = weight
+
+  @protected
+  def _get_weight(self):
+    return self.weight
+
+class GreenApple(Apple):
+  """A green apple."""
+  @public
+  def get_weight(self):
+    return self._get_weight()
+```
+
+With this interface, we can access `Apple.weight` through `GreenApple.get_weight()`.
+This is because `GreenApple` has access to the `Apple._get_weight()` method
+which subsequently has access to the private `Apple.weight` attribute.
+
+```python
+>>> apple = GreenApple(2.5)
+>>> apple.weight
+AttributeError: Attribute not found.
+>>> apple._get_weight()
+AttributeError: Cannot access protected GreenApple object member _get_weight.
+>>> apple.get_weight()
+2.5
 ```
