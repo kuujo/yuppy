@@ -7,6 +7,7 @@ __all__ = [
   'const',
   'method',
   'public',
+  'protected',
   'private',
   'static',
 ]
@@ -64,6 +65,12 @@ class PublicConstant(_Constant):
   A public constant object.
   """
   __visibility__ = 'public'
+
+class ProtectedConstant(_Constant):
+  """
+  A protected constant object.
+  """
+  __visibility__ = 'protected'
 
 class PrivateConstant(_Constant):
   """
@@ -138,6 +145,12 @@ class PublicVariable(_Variable):
   """
   __visibility__ = 'public'
 
+class ProtectedVariable(_Variable):
+  """
+  A protected variable attribute.
+  """
+  __visibility__ = 'protected'
+
 class PrivateVariable(_Variable):
   """
   A private variable attribute.
@@ -154,6 +167,12 @@ class PublicStaticVariable(_StaticVariable):
   A public static variable attribute.
   """
   __visibility__ = 'public'
+
+class ProtectedStaticVariable(_StaticVariable):
+  """
+  A protected static variable attribute.
+  """
+  __visibility__ = 'protected'
 
 class PrivateStaticVariable(_StaticVariable):
   """
@@ -178,6 +197,12 @@ class PublicMethod(_Method):
   """
   __visibility__ = 'public'
 
+class ProtectedMethod(_Method):
+  """
+  A protected method.
+  """
+  __visibility__ = 'protected'
+
 class PrivateMethod(_Method):
   """
   A private method.
@@ -195,6 +220,12 @@ class PublicStaticMethod(_StaticMethod):
   """
   __visibility__ = 'public'
 
+class ProtectedStaticMethod(_StaticMethod):
+  """
+  A protected static method.
+  """
+  __visibility__ = 'protected'
+
 class PrivateStaticMethod(_StaticMethod):
   """
   A private static method.
@@ -207,6 +238,34 @@ class ObjectClass(object):
   """
   def __init__(self, name, bases=(), attrs=None, __doc__=None, __module__=None):
     attrs, publicattrs = attrs or {}, {}
+
+    # Check for inherited members.
+    self.__attrs = attrs
+    for cls in bases:
+      for attrname, attr in cls.__attrs.items():
+        try:
+          attrs[attrname]
+        except KeyError:
+          try:
+            if attr.__visibility__ in ('public', 'protected'):
+              if isinstance(attr, _StaticMethod):
+                attrs[attrname] = attr.__method__
+                attr = self._get_static_method_wrapper(attr.__method__)
+              elif isinstance(attr, _Method):
+                attrs[attrname] = attr.__method__
+                attr = self._get_instance_method_wrapper(attr.__method__)
+              elif isinstance(attr, FunctionType):
+                attr = self._get_instance_method_wrapper(attr)
+              else:
+                attr = self._get_attribute_wrapper(attrname)
+              publicattrs[attrname] = attr
+            else:
+              publicattrs[attrname] = _PrivateAttribute()
+              publicattrs[attrname].__name__ = attrname
+          except AttributeError:
+            publicattrs[attrname] = _PrivateAttribute()
+            publicattrs[attrname].__name__ = attrname
+
     for attrname, attr in attrs.items():
       if isinstance(attr, _Attribute):
         attr.__name__ = attrname
@@ -322,6 +381,29 @@ def public(*args, **kwargs):
   else:
     return PublicVariable(*args, **kwargs)
 
+def protected(*args, **kwargs):
+  """
+  Creates a protected attribute.
+  """
+  if len(args) == 1 and len(kwargs) == 0:
+    if isinstance(args[0], FunctionType):
+      return ProtectedMethod(args[0])
+    elif isinstance(args[0], _StaticMethod):
+      return ProtectedStaticMethod(args[0].__method__)
+    elif isinstance(args[0], _Method):
+      return ProtectedMethod(args[0].__method__)
+    elif isinstance(args[0], _Constant):
+      return ProtectedConstant(args[0].__value__)
+    elif isinstance(args[0], _Variable):
+      var = ProtectedVariable()
+      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
+        setattr(var, attr, getattr(args[0], attr))
+      return var
+    else:
+      return ProtectedVariable(args[0])
+  else:
+    return ProtectedVariable(*args, **kwargs)
+
 def private(*args, **kwargs):
   """
   Creates a private attribute.
@@ -349,12 +431,19 @@ def static(*args, **kwargs):
   if len(args) == 1 and len(kwargs) == 0:
     if isinstance(args[0], FunctionType):
       return PublicStaticMethod(args[0])
-    if isinstance(args[0], PublicMethod):
+    elif isinstance(args[0], PublicMethod):
       return PublicStaticMethod(args[0].__method__)
+    elif isinstance(args[0], ProtectedMethod):
+      return ProtectedStaticMethod(args[0].__method__)
     elif isinstance(args[0], PrivateMethod):
       return PrivateStaticMethod(args[0].__method__)
     elif isinstance(args[0], PublicVariable):
       var = PublicStaticVariable()
+      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
+        setattr(var, attr, getattr(args[0], attr))
+      return var
+    elif isinstance(args[0], ProtectedVariable):
+      var = ProtectedStaticVariable()
       for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
         setattr(var, attr, getattr(args[0], attr))
       return var
