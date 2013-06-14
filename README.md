@@ -4,13 +4,13 @@ Extreme Python
 _XPy is released under the [MIT License](http://opensource.org/licenses/MIT)._
 
 Extreme Python is a small library that integrates seamlessly with Python
-to promote data integrity through essential principles of object-oriented
+to promote data integrity through some essential principles of object-oriented
 programming. XPy adds authentic Python support for encapsulation and
-arbitrary object member validation - features that are commonly found
-in other object-oriented languages. While this library should certainly
-not always be used when developing with Python, it can certainly improve
-the integrity of your data and the stability of your code without
-comprimising usability in many cases.
+built-in member validation - features that are commonly found in other
+object-oriented languages. While this library should certainly not always
+be used when developing with Python, it can certainly improve the
+integrity of your data and the stability of your code without
+comprimising usability.
 
 ##### _"But encapsulation is bad!"_
 But options are good. Sure, Python is a dynamic language, and often its
@@ -24,9 +24,9 @@ from being changed.
 Sure, duck typing often allows for more flexibility for users of libaries.
 But without the proper precautions a lack of type checking can ultimately
 lead to unpredictable code. What if some code somewhere is changing your
-FTP class's `port` attribute to an invalid string? Guess what, you won't
-find out about it until your code tries to connect to the FTP server. By
-that time, it's hard to tell where that bad port number came from. XPy
+FTP class's `port` attribute to an invalid string? You won't find out
+about it until your code tries to connect to the FTP server. By that
+time, it can be hard to tell where that bad port number came from. XPy
 can automatically type check class or instance variables _at the point
 at which they are set_ to ensure that your data is not corrupted.
 
