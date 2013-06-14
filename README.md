@@ -37,9 +37,65 @@ languages, making for more clear, concise, and reliable code.
 # When importing xpy.*, the following variables will be imported:
 # Object, var, const, method, public, protected, private, and static.
 from xpy import *
+
+# XPy classes *must* extend the base xpy.Object class.
+class Apple(Object):
+  """An abstract apple."""
+  weight = private(type=float)
+
+  def __init__(self, weight):
+    self.weight = weight
+
+  @protected
+  def get_weight(self):
+    return self.weight
+
+  @protected
+  def set_weight(self, weight):
+    self.weight = weight
+
+class GreenApple(Object):
+  """A green apple."""
+  color = private(const('green'))
+
+  def __init__(self, weight):
+    # Green apples are .5 lbs heavier on average.
+    self.override_weight(weight+.5)
+
+  @private
+  def override_weight(self, weight):
+    return self.set_weight(weight)
+
+  @public
+  def get_weight(self):
+    return self.weight
+
+  @public
+  def get_color(self):
+    return self.color
 ```
 
-### API
+#### Testing the example
+```python
+>>> apple = Apple('two')
+AttributeError: Invalid attribute value for weight.
+>>> apple = Apple(2.0)
+>>> apple.set_weight(2.5)
+AttributeError: Cannot access protected Apple attribute set_weight.
+>>> apple.get_weight()
+AttributeError: Cannot access protected Apple attribute get_weight.
+>>> greenapple = GreenApple(2.0)
+>>> greenapple.color
+AttributeError: Cannot access private GreenApple attribute color.
+>>> greenapple.get_color()
+green
+>>> greenapple.get_weight()
+2.5
+>>> greenapple.set_weight()
+AttributeError: Cannot access protected GreenApple attribute set_weight.
+```
+
+### The API
 
 #### var
 Creates a public variable attribute.
