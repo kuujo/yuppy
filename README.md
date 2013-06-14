@@ -78,7 +78,7 @@ class GreenApple(Apple):
 ```
 
 #### Testing the example
-```python
+```
 >>> apple = Apple('two')
 AttributeError: Invalid attribute value for 'weight'.
 >>> apple = Apple(2.0)
@@ -121,7 +121,7 @@ class Apple(Object):
   foo = var(type=int, default=None, validate=lambda x: x == 1)
 ```
 
-```python
+```
 >>> apple = Apple()
 ```
 
@@ -144,7 +144,7 @@ class RedApple(Object):
   color = const('red')
 ```
 
-```python
+```
 >>> RedApple.color
 red
 >>> RedApple.color = 'blue'
@@ -168,7 +168,7 @@ class Apple(Object):
     return self.color
 ```
 
-```python
+```
 >>> apple = Apple()
 >>> apple.getcolor()
 red
@@ -248,7 +248,7 @@ With this interface, we can access `Apple.weight` through `GreenApple.get_weight
 This is because `GreenApple` has access to the `Apple._get_weight()` method
 which subsequently has access to the private `Apple.weight` attribute.
 
-```python
+```
 >>> apple = GreenApple(2.5)
 >>> apple.weight
 AttributeError: GreenApple object has not attribute 'weight'.
@@ -299,7 +299,7 @@ Now, if we create a new `Apple` instance and try to access its attributes
 from outside the class we will fail. However, we'll see that access from
 within the class works just fine.
 
-```python
+```
 >>> apple = Apple(2.5)
 >>> apple.weight
 AttributeError: Cannot access private Apple object member 'weight'.
@@ -340,7 +340,7 @@ With static members, changes to a member variable will be applied to
 all instances of the class. So, even after instantiating a new instance
 of the class, the `weight` attribute value will remain the same.
 
-```python
+```
 >>> apple1 = Apple()
 >>> apple1.weight
 None
@@ -380,7 +380,7 @@ Note that if an improper value is passed to the constructor, the validator
 will automatically try to cast it to the correct type if only one type
 is provided.
 
-```python
+```
 >>> apple = Apple(1)
 >>> apple = Apple('one')
 AttributeError: Invalid attribute value for 'weight'.
