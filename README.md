@@ -110,7 +110,7 @@ Creates a public variable attribute.
 var([default=None[, type=None[, validate=None]]])
 ```
 
-#### Example
+##### Example
 ```python
 from xpy import *
 class Apple(Object):
@@ -133,7 +133,7 @@ constructor.
 const(value)
 ```
 
-#### Example
+##### Example
 ```python
 from xpy import *
 class RedApple(Object):
@@ -153,7 +153,7 @@ Creates a public method attribute.
 method(callback)
 ```
 
-#### Example
+##### Example
 ```python
 from xpy import *
 class Apple(Object):
@@ -183,7 +183,7 @@ is a `FunctionType`, or `var` otherwise.
 public([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
-#### Example
+##### Example
 ```python
 from xpy import *
 
@@ -217,7 +217,7 @@ the argument is a `FunctionType`, or `var` otherwise.
 protected([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
-#### Example
+##### Example
 
 ```python
 from xpy import *
@@ -271,7 +271,7 @@ is a `FunctionType`, or `var` otherwise.
 private([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
-#### Example
+##### Example
 
 ```python
 from xpy import *
@@ -305,8 +305,6 @@ AttributeError: Cannot access private Apple object member '_get_weight'.
 2.5
 ```
 
-#### Extra
-
 ### static
 Creates a static attribute.
 
@@ -324,7 +322,7 @@ if the argument is a `FunctionType`, or `var` otherwise.
 static([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
-#### Example
+##### Example
 
 ```python
 from xpy import *
@@ -359,6 +357,8 @@ set rather than when they're accessed.
 Any `var` type can perform data validation. When creating a new `var`,
 we can pass either `type=<type>` or `validate=<func>` to the object
 constructor.
+
+##### Example
 
 ```python
 from xpy import *
