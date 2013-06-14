@@ -148,9 +148,9 @@ otherwise.
 static([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
-### Examples
+## Examples
 
-#### Type Validation
+### Type Validation
 XPy can perform direct type checking and arbitrary execution of validation
 callbacks. When a mutable XPy attribute is set, validators will automatically
 be executed. This ensures that values are validated at the time they're
@@ -182,7 +182,25 @@ is provided.
 AttributeError: Invalid attribute value for 'weight'.
 ```
 
-#### Private Members
+### Public Members
+All class members are naturally public in Python. Therefore, XPy's `public` decorator
+is generally used simply for readability.
+
+```python
+from xpy import *
+
+class Apple(Object):
+  """An abstract apple."""
+  # The two following lines result in the exact same property.
+  foo = var(type=int)
+  bar = public(validate=lambda x: isinstance(x, int))
+
+  @public
+  def baz(self):
+    return self.bar
+```
+
+### Private Members
 Private members are variables that can only be accessed from within a class.
 They support data integrity by preventing class users from altering internal attribute.
 With XPy we can decorate any class member with `private` to hide it from outside access.
@@ -222,7 +240,7 @@ AttributeError: Cannot access private Apple object member '_get_weight'.
 2.5
 ```
 
-#### Protected Members
+### Protected Members
 _Note that protected member _variables_ are not currently reliable. Thus
 the `protected` decorator should only be used for methods._
 
@@ -267,7 +285,7 @@ AttributeError: Cannot access protected GreenApple object member '_get_weight'.
 2.5
 ```
 
-#### Static Members
+### Static Members
 Static XPy members are equivalent to standard Python class members. This is
 essentially the same parallel that exists between Python's class members
 and static variables in many other object-oriented languages. With XPy we
@@ -299,7 +317,7 @@ None
 2.0
 ```
 
-#### Constants
+### Constants
 Constants are attributes which have a permanent value. They can be used for
 any value which should never change within the application, such as an
 application port number, for instance. With XPy we can use the `const`

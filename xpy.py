@@ -1,4 +1,4 @@
-from types import FunctionType
+from types import FunctionType, MethodType
 import copy
 
 __all__ = [
