@@ -128,7 +128,7 @@ Creates a protected attribute. Note that if an attribute (`var`, `const`, or
 `method`) is not passed as the first argument, this decorator will create
 a protected `method` if the argument is a `FunctionType`, or `var` otherwise.
 ```
-public([value=None[, default=None[, type=None[, validate=None]]]])
+protected([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
 #### private
@@ -136,7 +136,7 @@ Creates a private attribute. Note that if an attribute (`var`, `const`, or
 `method`) is not passed as the first argument, this decorator will create
 a private `method` if the argument is a `FunctionType`, or `var` otherwise.
 ```
-public([value=None[, default=None[, type=None[, validate=None]]]])
+private([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
 #### static
@@ -145,7 +145,7 @@ Creates a static attribute. Note that if an attribute (`var`, `const`, or
 a public static `method` if the argument is a `FunctionType`, or `var`
 otherwise.
 ```
-public([value=None[, default=None[, type=None[, validate=None]]]])
+static([value=None[, default=None[, type=None[, validate=None]]]])
 ```
 
 ### Examples
