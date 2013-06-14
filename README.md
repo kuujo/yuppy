@@ -1,6 +1,8 @@
 Extreme Python
 --------------
 
+_XPy is released under the [MIT License](http://opensource.org/licenses/MIT)._
+
 Extreme Python is a small library that integrates seamlessly with Python
 to promote data integrity through essential principles of object-oriented
 programming. XPy adds authentic Python support for encapsulation and
@@ -342,3 +344,5 @@ change that value will result in an `AttributeError`.
 >>> apple.weight = 2.0
 AttributeError: Cannot override Apple object constant 'weight'.
 ```
+
+_Copyright (c) 2013 Jordan Halterman
