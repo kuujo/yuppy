@@ -78,9 +78,10 @@ class _Constant(_Attribute):
     """Prevents the constant from being changed."""
     raise AttributeError("Cannot override %s object constant '%s'." % (instance.__class__.__name__, self.__name__))
 
-  def __del__(self, instance):
+  def __del__(self, instance=None):
     """Prevents the constant from being deleted."""
-    raise AttributeError("Cannot override %s object constant '%s'." % (instance.__class__.__name__, self.__name__))
+    if instance is not None:
+      raise AttributeError("Cannot override %s object constant '%s'." % (instance.__class__.__name__, self.__name__))
 
 class PublicConstant(_Constant):
   """
