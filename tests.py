@@ -16,7 +16,6 @@ class PublicVariableTestCase(unittest.TestCase):
     self.assertRaises(AttributeError, setfoo, 'foo')
     self.assertRaises(AttributeError, setfoo, 2)
     setfoo(1)
-    instance2 = PublicVariable()
 
 class PublicMethod(Object):
   @public
@@ -76,10 +75,27 @@ class PublicConstantTestCase(unittest.TestCase):
       PublicConstant.foo = value
     self.assertRaises(AttributeError, setfoo, 'baz')
 
+class ProtectedVariable(Object):
+  foo = protected(type=int, validate=lambda x: x == 1)
+  def setfoo(self, value):
+    self.foo = value
+  def getfoo(self):
+    return self.foo
+
 class ProtectedVariableTestCase(unittest.TestCase):
   """
   Protected member variable test case.
   """
+  def test_protected_variable(self):
+    instance = ProtectedVariable()
+    def getfoo(value):
+      instance.foo
+    def setfoo(value):
+      instance.foo = value
+    self.assertRaises(AttributeError, setfoo, 'foo')
+    self.assertRaises(AttributeError, setfoo, 2)
+    instance.setfoo(1)
+    self.assertEquals(instance.getfoo(), 1)
 
 class ProtectedMethodTestCase(unittest.TestCase):
   """
