@@ -110,7 +110,9 @@ class ProtectedMethodTestCase(unittest.TestCase):
   """
   def test_protected_method(self):
     instance = ProtectedMethod()
-    self.assertRaises(AttributeError, instance.foo)
+    def getfoo():
+      instance.foo
+    self.assertRaises(AttributeError, getfoo)
     instance.getfoo()
 
 class ProtectedStaticVariableTestCase(unittest.TestCase):
