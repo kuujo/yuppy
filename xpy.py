@@ -239,23 +239,22 @@ class ObjectClass(object):
   def __init__(self, name, bases=(), attrs=None, __doc__=None, __module__=None):
     attrs, publicattrs = attrs or {}, {}
 
-    # Check for inherited members.
+    # Copy the full attributes dictionary into the current instance.
     self.__attrs = copy.copy(attrs)
+
+    # Check all parent instances for inherited attributes. Note that
+    # attributes may only be inherited if they're public or protected.
     for cls in bases:
       for attrname, attr in cls.__attrs.items():
         if attrname not in attrs:
-          attrs[attrname] = attr
+          try:
+            if attr.__visibility__ in ('public', 'protected'):
+              attrs[attrname] = attr
+          except AttributeError:
+            attrs[attrname] = attr
 
+    # Now iterate over all current class members.
     for attrname, attr in attrs.items():
-      inherited = None
-      for cls in bases:
-        try:
-          inherited = cls.__attrs[attrname]
-        except KeyError:
-          continue
-        else:
-          break
-
       if isinstance(attr, _Attribute):
         attr.__name__ = attrname
 
@@ -285,10 +284,15 @@ class ObjectClass(object):
         publicattrs[attrname] = _PrivateAttribute()
         publicattrs[attrname].__name__ = attrname
 
+    # If the instance does not have an __init__ method then create a
+    # placeholder __init__ method.
     if not attrs.has_key('__init__'):
       attrs['__init__'] = lambda self, *args, **kwargs: None
     publicattrs['__init__'] = self._get_init_wrapper(attrs['__init__'])
 
+    # Create an internal and external instance. The internal instance
+    # contains all attributes in the object, while the external instance
+    # contains only those attributes that are public.
     self.__cprivate__ = type(name, (object,), attrs)
     self.__cpublic__ = type(name, (object,), publicattrs)
 
