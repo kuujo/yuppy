@@ -1,6 +1,19 @@
 import unittest
 from xpy import *
 
+class Constant(Object):
+  foo = const('bar')
+
+class ConstantTestCase(unittest.TestCase):
+  """
+  Constant test case.
+  """
+  def test_constant(self):
+    Constant.foo
+    def setfoo(value):
+      Constant.foo = value
+    self.assertRaises(AttributeError, setfoo, 'baz')
+
 class PublicVariable(Object):
   foo = public(default=2, type=int, validate=lambda x: x == 1)
 
@@ -61,19 +74,6 @@ class PublicStaticMethodTestCase(unittest.TestCase):
   def test_public_static_method(self):
     instance = PublicStaticMethod()
     self.assertEquals(instance.foo(), instance.__class__)
-
-class PublicConstant(Object):
-  foo = const('bar')
-
-class PublicConstantTestCase(unittest.TestCase):
-  """
-  Public constant test case.
-  """
-  def test_public_constant(self):
-    PublicConstant.foo
-    def setfoo(value):
-      PublicConstant.foo = value
-    self.assertRaises(AttributeError, setfoo, 'baz')
 
 class ProtectedVariable(Object):
   foo = protected(type=int, validate=lambda x: x == 1)
@@ -186,15 +186,34 @@ class PrivateMethodTestCase(unittest.TestCase):
     self.assertRaises(AttributeError, getfoo)
     instance.getfoo()
 
+class PrivateStaticVariable(Object):
+  foo = static(private(type=int, validate=lambda x: x == 1))
+
 class PrivateStaticVariableTestCase(unittest.TestCase):
   """
   Private static variable test case.
   """
+  def test_public_static_variable(self):
+    instance = PrivateStaticVariable()
+    self.assertRaises(AttributeError, getattr, instance, 'foo')
+    def setfoo(value):
+      instance.foo = value
+    self.assertRaises(AttributeError, setfoo, 'foo')
+    self.assertRaises(AttributeError, setfoo, 2)
+
+class PrivateStaticMethod(Object):
+  @static
+  @private
+  def foo(self):
+    return self
 
 class PrivateStaticMethodTestCase(unittest.TestCase):
   """
   Private static method test case.
   """
+  def test_private_static_method(self):
+    instance = PrivateStaticMethod()
+    self.assertRaises(AttributeError, getattr, instance, 'foo')
 
 class PrivateConstantTestCase(unittest.TestCase):
   """
@@ -203,19 +222,17 @@ class PrivateConstantTestCase(unittest.TestCase):
 
 def all_tests():
   suite = unittest.TestSuite()
+  suite.addTest(unittest.makeSuite(ConstantTestCase))
   suite.addTest(unittest.makeSuite(PublicVariableTestCase))
   suite.addTest(unittest.makeSuite(PublicMethodTestCase))
   suite.addTest(unittest.makeSuite(PublicStaticVariableTestCase))
   suite.addTest(unittest.makeSuite(PublicStaticMethodTestCase))
-  suite.addTest(unittest.makeSuite(PublicConstantTestCase))
   suite.addTest(unittest.makeSuite(ProtectedVariableTestCase))
   suite.addTest(unittest.makeSuite(ProtectedMethodTestCase))
   suite.addTest(unittest.makeSuite(ProtectedStaticVariableTestCase))
   suite.addTest(unittest.makeSuite(ProtectedStaticMethodTestCase))
-  suite.addTest(unittest.makeSuite(ProtectedConstantTestCase))
   suite.addTest(unittest.makeSuite(PrivateVariableTestCase))
   suite.addTest(unittest.makeSuite(PrivateMethodTestCase))
   suite.addTest(unittest.makeSuite(PrivateStaticVariableTestCase))
   suite.addTest(unittest.makeSuite(PrivateStaticMethodTestCase))
-  suite.addTest(unittest.makeSuite(PrivateConstantTestCase))
   return suite
