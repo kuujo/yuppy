@@ -78,21 +78,21 @@ class GreenApple(Object):
 #### Testing the example
 ```python
 >>> apple = Apple('two')
-AttributeError: Invalid attribute value for weight.
+AttributeError: Invalid attribute value for 'weight'.
 >>> apple = Apple(2.0)
 >>> apple.set_weight(2.5)
-AttributeError: Cannot access protected Apple attribute set_weight.
+AttributeError: Cannot access protected Apple attribute 'set_weight'.
 >>> apple.get_weight()
-AttributeError: Cannot access protected Apple attribute get_weight.
+AttributeError: Cannot access protected Apple attribute 'get_weight'.
 >>> greenapple = GreenApple(2.0)
 >>> greenapple.color
-AttributeError: Cannot access private GreenApple attribute color.
+AttributeError: Cannot access private GreenApple attribute 'color'.
 >>> greenapple.get_color()
 green
 >>> greenapple.get_weight()
 2.5
 >>> greenapple.set_weight()
-AttributeError: Cannot access protected GreenApple attribute set_weight.
+AttributeError: Cannot access protected GreenApple attribute 'set_weight'.
 ```
 
 ### The API
@@ -179,7 +179,7 @@ is provided.
 ```python
 >>> apple = Apple(1)
 >>> apple = Apple('one')
-AttributeError: Invalid attribute value for weight.
+AttributeError: Invalid attribute value for 'weight'.
 ```
 
 #### Private Members
@@ -215,9 +215,9 @@ within the class works just fine.
 ```python
 >>> apple = Apple(2.5)
 >>> apple.weight
-AttributeError: Cannot access private Apple object member weight.
+AttributeError: Cannot access private Apple object member 'weight'.
 >>> apple._get_weight()
-AttributeError: Cannot access private Apple object member _get_weight.
+AttributeError: Cannot access private Apple object member '_get_weight'.
 >>> apple.get_weight()
 2.5
 ```
@@ -259,7 +259,7 @@ which subsequently has access to the private `Apple.weight` attribute.
 >>> apple.weight
 AttributeError: Attribute not found.
 >>> apple._get_weight()
-AttributeError: Cannot access protected GreenApple object member _get_weight.
+AttributeError: Cannot access protected GreenApple object member '_get_weight'.
 >>> apple.get_weight()
 2.5
 ```
@@ -319,5 +319,5 @@ change that value will result in an `AttributeError`.
 >>> apple.weight
 2.5
 >>> apple.weight = 2.0
-AttributeError: Cannot override Apple object constant weight.
+AttributeError: Cannot override Apple object constant 'weight'.
 ```

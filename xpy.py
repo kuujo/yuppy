@@ -31,15 +31,35 @@ class _PrivateAttribute(_Attribute):
   """
   def __get__(self, instance, owner=None):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access private %s object member %s." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access private %s object member %s." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __det__(self, instance):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access private %s object member %s." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
+class _ProtectedAttribute(_Attribute):
+  """
+  A public placeholder for private attributes.
+
+  This is the attribute that is exposed to the outside world when an
+  attribute is protected. If the attribute is accessed in any way, an
+  AttributeError will be raised.
+  """
+  def __get__(self, instance, owner=None):
+    """Raises an attribute error."""
+    raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """Raises an attribute error."""
+    raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
+  def __det__(self, instance):
+    """Raises an attribute error."""
+    raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
 class _Constant(_Attribute):
   """
@@ -54,11 +74,11 @@ class _Constant(_Attribute):
 
   def __set__(self, instance, value):
     """Prevents the constant from being changed."""
-    raise AttributeError("Cannot override %s object constant %s." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot override %s object constant '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __del__(self, instance):
     """Prevents the constant from being deleted."""
-    raise AttributeError("Cannot override %s object constant %s." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot override %s object constant '%s'." % (instance.__class__.__name__, self.__name__))
 
 class PublicConstant(_Constant):
   """
@@ -117,16 +137,16 @@ class _Variable(_Attribute):
           try:
             value = self.__type__(value)
           except TypeError:
-            raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
+            raise AttributeError("Invalid attribute value for '%s'." % (self.__name__,))
           except ValueError:
-            raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
+            raise AttributeError("Invalid attribute value for '%s'." % (self.__name__,))
           else:
             return value
         else:
-          raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
+          raise AttributeError("Invalid attribute value for '%s'." % (self.__name__,))
     if self.__validate__ is not None:
       if not self.__validate__(value):
-        raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
+        raise AttributeError("Invalid attribute value for '%s'." % (self.__name__,))
     return value
 
   def __get__(self, instance, owner=None):
@@ -136,7 +156,7 @@ class _Variable(_Attribute):
       if self.__hasdefault__:
         return self.__default__
       else:
-        raise AttributeError("%s object has not attribute %s." % (instance.__class__.__name__, self.__name__))
+        raise AttributeError("%s object has not attribute '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Sets the variable value."""
@@ -147,7 +167,7 @@ class _Variable(_Attribute):
     try:
       del instance.__dict__[self.__name__]
     except KeyError:
-      raise AttributeError("%s object has not attribute %s." % (instance.__class__.__name__, self.__name__))
+      raise AttributeError("%s object has not attribute '%s'." % (instance.__class__.__name__, self.__name__))
 
 class PublicVariable(_Variable):
   """
@@ -291,7 +311,10 @@ class ObjectClass(object):
       if visibility == 'public':
         publicattrs[attrname] = attr
       else:
-        publicattrs[attrname] = _PrivateAttribute()
+        if visibility == 'protected':
+          publicattrs[attrname] = _ProtectedAttribute()
+        else:
+          publicattrs[attrname] = _PrivateAttribute()
         publicattrs[attrname].__name__ = attrname
 
     # If the instance does not have an __init__ method then create a
