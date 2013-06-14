@@ -240,33 +240,22 @@ class ObjectClass(object):
     attrs, publicattrs = attrs or {}, {}
 
     # Check for inherited members.
-    self.__attrs = attrs
+    self.__attrs = copy.copy(attrs)
     for cls in bases:
       for attrname, attr in cls.__attrs.items():
-        try:
-          attrs[attrname]
-        except KeyError:
-          try:
-            if attr.__visibility__ in ('public', 'protected'):
-              if isinstance(attr, _StaticMethod):
-                attrs[attrname] = attr.__method__
-                attr = self._get_static_method_wrapper(attr.__method__)
-              elif isinstance(attr, _Method):
-                attrs[attrname] = attr.__method__
-                attr = self._get_instance_method_wrapper(attr.__method__)
-              elif isinstance(attr, FunctionType):
-                attr = self._get_instance_method_wrapper(attr)
-              else:
-                attr = self._get_attribute_wrapper(attrname)
-              publicattrs[attrname] = attr
-            else:
-              publicattrs[attrname] = _PrivateAttribute()
-              publicattrs[attrname].__name__ = attrname
-          except AttributeError:
-            publicattrs[attrname] = _PrivateAttribute()
-            publicattrs[attrname].__name__ = attrname
+        if attrname not in attrs:
+          attrs[attrname] = attr
 
     for attrname, attr in attrs.items():
+      inherited = None
+      for cls in bases:
+        try:
+          inherited = cls.__attrs[attrname]
+        except KeyError:
+          continue
+        else:
+          break
+
       if isinstance(attr, _Attribute):
         attr.__name__ = attrname
 
@@ -297,7 +286,7 @@ class ObjectClass(object):
         publicattrs[attrname].__name__ = attrname
 
     if not attrs.has_key('__init__'):
-      attrs['__init__'] = lambda self: None
+      attrs['__init__'] = lambda self, *args, **kwargs: None
     publicattrs['__init__'] = self._get_init_wrapper(attrs['__init__'])
 
     self.__cprivate__ = type(name, (object,), attrs)
