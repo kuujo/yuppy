@@ -113,7 +113,17 @@ class _Variable(_Attribute):
     """
     if self.__type__ is not None:
       if not isinstance(value, self.__type__):
-        raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
+        if not isinstance(self.__type__, (list, tuple)):
+          try:
+            value = self.__type__(value)
+          except TypeError:
+            raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
+          except ValueError:
+            raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
+          else:
+            return value
+        else:
+          raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
     if self.__validate__ is not None:
       if not self.__validate__(value):
         raise AttributeError("Invalid attribute value for %s." % (self.__name__,))
