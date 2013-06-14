@@ -207,3 +207,61 @@ AttributeError: Cannot access protected GreenApple object member _get_weight.
 >>> apple.get_weight()
 2.5
 ```
+
+#### Static Members
+Static XPy members are equivalent to standard Python class members. This is
+essentially the same parallel that exists between Python's class members
+and static variables in many other object-oriented languages. With XPy we
+can use the `static` decorator to create static methods or properties. Note
+that `static` members can be further decorated with `public`, `private`,
+or `protected`.
+
+```python
+from xpy import *
+
+class Apple(Object):
+  """An abstract apple."""
+  weight = static(type=float, default=None)
+```
+
+With static members, changes to a member variable will be applied to
+all instances of the class. So, even after instantiating a new instance
+of the class, the `weight` attribute value will remain the same.
+
+```python
+>>> apple1 = Apple()
+>>> apple1.weight
+None
+>>> apple1.weight = 2.0
+>>> apple1.weight
+2.0
+>>> apple2 = Apple()
+>>> apple2.weight
+2.0
+```
+
+#### Constants
+Constants are attributes which have a permanent value. They can be used for
+any value which should never change within the application, such as an
+application port number, for instance. With XPy we can use the `const`
+decorator to create a constant, passing a single permanent value to the
+constructor.
+
+```python
+from xpy import *
+
+class Apple(Object):
+  """An abstract apple."""
+  weight = const(2.5)
+```
+
+Now, all apple weights are set at a constant `2.5`, and any attempts to
+change that value will result in an `AttributeError`.
+
+```python
+>>> apple = Apple(2.5)
+>>> apple.weight
+2.5
+>>> apple.weight = 2.0
+AttributeError: Cannot override Apple object constant weight.
+```
