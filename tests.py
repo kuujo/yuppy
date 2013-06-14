@@ -82,26 +82,42 @@ class ProtectedVariable(Object):
   def getfoo(self):
     return self.foo
 
+class ExtendedVariable(ProtectedVariable):
+  def extfoo(self):
+    return self.foo
+
 class ProtectedVariableTestCase(unittest.TestCase):
   """
   Protected member variable test case.
   """
   def test_protected_variable(self):
     instance = ProtectedVariable()
-    def getfoo(value):
+    def getfoo():
       instance.foo
     def setfoo(value):
       instance.foo = value
-    self.assertRaises(AttributeError, setfoo, 'foo')
+    self.assertRaises(AttributeError, getfoo)
     self.assertRaises(AttributeError, setfoo, 2)
     instance.setfoo(1)
     self.assertEquals(instance.getfoo(), 1)
+    instance2 = ExtendedVariable()
+    def getfoo():
+      instance2.foo
+    def setfoo(value):
+      instance2.foo = value
+    self.assertRaises(AttributeError, getfoo)
+    self.assertRaises(AttributeError, setfoo, 'foo')
+    instance2.extfoo() # This fails!
 
 class ProtectedMethod(Object):
   @protected
   def foo(self):
     return 'bar'
   def getfoo(self):
+    return self.foo()
+
+class ExtendedMethod(ProtectedMethod):
+  def extfoo(self):
     return self.foo()
 
 class ProtectedMethodTestCase(unittest.TestCase):
