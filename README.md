@@ -91,6 +91,8 @@ green
 >>> greenapple = GreenApple(2.0)
 >>> greenapple.color
 green
+>>> greenapple.color = 'red'
+AttributeError: Cannot override GreenApple object constant 'color'.
 >>> greenapple.weight
 AttributeError: GreenApple object has not attribute 'weight'.
 >>> greenapple.get_weight()
@@ -146,7 +148,7 @@ class RedApple(Object):
 >>> RedApple.color
 red
 >>> RedApple.color = 'blue'
-AttributeError: Cannot override Apple object constant 'red'.
+AttributeError: Cannot override Apple object constant 'color'.
 ```
 
 ### method
