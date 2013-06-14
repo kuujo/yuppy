@@ -11,92 +11,6 @@ __all__ = [
   'static',
 ]
 
-def var(*args, **kwargs):
-  """
-  Creates a publicly scoped variable attribute.
-  """
-  return PublicVariable(*args, **kwargs)
-
-def const(value):
-  """
-  Creates a publicly scoped constant attribute.
-  """
-  return PublicConstant(value)
-
-def method(meth):
-  """
-  Creates a publicly scoped method attribute.
-  """
-  return PublicMethod(meth)
-
-def static(*args, **kwargs):
-  if len(args) == 1 and len(kwargs) == 0:
-    if isinstance(args[0], FunctionType):
-      return PublicStaticMethod(args[0])
-    if isinstance(args[0], PublicMethod):
-      return PublicStaticMethod(args[0].__method__)
-    elif isinstance(args[0], PrivateMethod):
-      return PrivateStaticMethod(args[0].__method__)
-    elif isinstance(args[0], PublicVariable):
-      var = PublicStaticVariable()
-      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
-        setattr(var, attr, getattr(args[0], attr))
-      return var
-    elif isinstance(args[0], PrivateVariable):
-      var = PrivateStaticVariable()
-      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
-        setattr(var, attr, getattr(args[0], attr))
-      return var
-    elif isinstance(args[0], Constant):
-      return args[0]
-  return PublicStaticVariable(*args, **kwargs)
-
-def public(*args, **kwargs):
-  """
-  Creates a public attribute.
-  """
-  if len(args) == 1 and len(kwargs) == 0:
-    if isinstance(args[0], FunctionType):
-      return PublicMethod(args[0])
-    elif isinstance(args[0], StaticMethod):
-      return PublicStaticMethod(args[0].__method__)
-    elif isinstance(args[0], Method):
-      return PublicMethod(args[0].__method__)
-    elif isinstance(args[0], Constant):
-      return PublicConstant(args[0].__value__)
-    elif isinstance(args[0], Variable):
-      var = PublicVariable()
-      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
-        setattr(var, attr, getattr(args[0], attr))
-      return var
-    else:
-      return PublicVariable(args[0])
-  else:
-    return PublicVariable(*args, **kwargs)
-
-def private(*args, **kwargs):
-  """
-  Creates a private attribute.
-  """
-  if len(args) == 1 and len(kwargs) == 0:
-    if isinstance(args[0], FunctionType):
-      return PrivateMethod(args[0])
-    elif isinstance(args[0], StaticMethod):
-      return PrivateStaticMethod(args[0].__method__)
-    elif isinstance(args[0], Method):
-      return PrivateMethod(args[0].__method__)
-    elif isinstance(args[0], Constant):
-      return PrivateConstant(args[0].__value__)
-    elif isinstance(args[0], Variable):
-      var = PrivateVariable()
-      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
-        setattr(var, attr, getattr(args[0], attr))
-      return var
-    else:
-      return PrivateVariable(args[0])
-  else:
-    return PrivateVariable(*args, **kwargs)
-
 class _Attribute(object):
   """
   An attribute.
@@ -106,9 +20,13 @@ class _Attribute(object):
   def __init__(self):
     self.__name__ = None
 
-class PrivateAttribute(_Attribute):
+class _PrivateAttribute(_Attribute):
   """
   A public placeholder for private attributes.
+
+  This is the attribute that is exposed to the outside world when an
+  attribute is private. If the attribute is accessed in any way, an
+  AttributeError will be raised.
   """
   def __get__(self, instance, owner=None):
     """Raises an attribute error."""
@@ -122,7 +40,7 @@ class PrivateAttribute(_Attribute):
     """Raises an attribute error."""
     raise AttributeError("Cannot access private %s object member %s." % (instance.__class__.__name__, self.__name__))
 
-class Constant(_Attribute):
+class _Constant(_Attribute):
   """
   An abstract constant attribute.
   """
@@ -141,19 +59,19 @@ class Constant(_Attribute):
     """Prevents the constant from being deleted."""
     raise AttributeError("Cannot override %s object constant %s." % (instance.__class__.__name__, self.__name__))
 
-class PublicConstant(Constant):
+class PublicConstant(_Constant):
   """
   A public constant object.
   """
   __visibility__ = 'public'
 
-class PrivateConstant(Constant):
+class PrivateConstant(_Constant):
   """
   A private constant object.
   """
   __visibility__ = 'private'
 
-class Variable(_Attribute):
+class _Variable(_Attribute):
   """
   A abstract variable attribute.
   """
@@ -180,7 +98,7 @@ class Variable(_Attribute):
         setattr(self, '__%s__'%(kwarg,), None)
       else:
         setattr(self, '__%s__'%(kwarg,), kwargs[kwarg])
-    super(Variable, self).__init__()
+    super(_Variable, self).__init__()
 
   def _validate(self, value):
     """
@@ -214,36 +132,36 @@ class Variable(_Attribute):
     except KeyError:
       raise AttributeError("%s object has not attribute %s." % (instance.__class__.__name__, self.__name__))
 
-class PublicVariable(Variable):
+class PublicVariable(_Variable):
   """
   A public variable attribute.
   """
   __visibility__ = 'public'
 
-class PrivateVariable(Variable):
+class PrivateVariable(_Variable):
   """
   A private variable attribute.
   """
   __visibility__ = 'private'
 
-class StaticVariable(Variable):
+class _StaticVariable(_Variable):
   """
   An abstract static variable attribute.
   """
 
-class PublicStaticVariable(StaticVariable):
+class PublicStaticVariable(_StaticVariable):
   """
   A public static variable attribute.
   """
   __visibility__ = 'public'
 
-class PrivateStaticVariable(StaticVariable):
+class PrivateStaticVariable(_StaticVariable):
   """
   A private static variable attribute.
   """
   __visibility__ = 'private'
 
-class Method(_Attribute):
+class _Method(_Attribute):
   """
   An abstract method attribute.
   """
@@ -254,24 +172,30 @@ class Method(_Attribute):
     """Gets the method object."""
     return self.__method__
 
-class PublicMethod(Method):
+class PublicMethod(_Method):
+  """
+  A public method.
+  """
   __visibility__ = 'public'
 
-class PrivateMethod(Method):
+class PrivateMethod(_Method):
+  """
+  A private method.
+  """
   __visibility__ = 'private'
 
-class StaticMethod(Method):
+class _StaticMethod(_Method):
   """
   A abstract static method attribute.
   """
 
-class PublicStaticMethod(StaticMethod):
+class PublicStaticMethod(_StaticMethod):
   """
   A public static method.
   """
   __visibility__ = 'public'
 
-class PrivateStaticMethod(StaticMethod):
+class PrivateStaticMethod(_StaticMethod):
   """
   A private static method.
   """
@@ -294,10 +218,10 @@ class ObjectClass(object):
         visibility = 'public'
 
       # If this is a method then wrap it. Otherwise, create an accessor.
-      if isinstance(attr, StaticMethod):
+      if isinstance(attr, _StaticMethod):
         attrs[attrname] = attr.__method__
         attr = self._get_static_method_wrapper(attr.__method__)
-      elif isinstance(attr, Method):
+      elif isinstance(attr, _Method):
         attrs[attrname] = attr.__method__
         attr = self._get_instance_method_wrapper(attr.__method__)
       elif isinstance(attr, FunctionType):
@@ -310,7 +234,7 @@ class ObjectClass(object):
       if visibility == 'public':
         publicattrs[attrname] = attr
       else:
-        publicattrs[attrname] = PrivateAttribute()
+        publicattrs[attrname] = _PrivateAttribute()
         publicattrs[attrname].__name__ = attrname
 
     if not attrs.has_key('__init__'):
@@ -327,6 +251,7 @@ class ObjectClass(object):
     return self.__cpublic__(self.__cprivate__(*args, **kwargs), *args, **kwargs)
 
   def _get_init_wrapper(self, init):
+    """Returns an instance __init__ method wrapper."""
     def wrapped(instance, *args, **kwargs):
       private = args[0]
       instance.__private__ = private
@@ -344,14 +269,100 @@ class ObjectClass(object):
     """Returns a class method wrapper."""
     return classmethod(method)
 
-  def _get_attribute_wrapper(self, attrName):
+  def _get_attribute_wrapper(self, attrname):
     """Returns an attribute wrapper."""
     def getter(instance):
-      return getattr(instance.__private__, attrName)
+      return getattr(instance.__private__, attrname)
     def setter(instance, val):
-      setattr(instance.__private__, attrName, val)
+      setattr(instance.__private__, attrname, val)
     def deleter(instance):
-      delattr(instance.__private__, attrName)
+      delattr(instance.__private__, attrname)
     return property(getter, setter, deleter)
 
 Object = ObjectClass('Object')
+
+def var(*args, **kwargs):
+  """
+  Creates a publicly scoped variable attribute.
+  """
+  return PublicVariable(*args, **kwargs)
+
+def const(value):
+  """
+  Creates a publicly scoped constant attribute.
+  """
+  return PublicConstant(value)
+
+def method(meth):
+  """
+  Creates a publicly scoped method attribute.
+  """
+  return PublicMethod(meth)
+
+def public(*args, **kwargs):
+  """
+  Creates a public attribute.
+  """
+  if len(args) == 1 and len(kwargs) == 0:
+    if isinstance(args[0], FunctionType):
+      return PublicMethod(args[0])
+    elif isinstance(args[0], _StaticMethod):
+      return PublicStaticMethod(args[0].__method__)
+    elif isinstance(args[0], _Method):
+      return PublicMethod(args[0].__method__)
+    elif isinstance(args[0], _Constant):
+      return PublicConstant(args[0].__value__)
+    elif isinstance(args[0], _Variable):
+      var = PublicVariable()
+      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
+        setattr(var, attr, getattr(args[0], attr))
+      return var
+    else:
+      return PublicVariable(args[0])
+  else:
+    return PublicVariable(*args, **kwargs)
+
+def private(*args, **kwargs):
+  """
+  Creates a private attribute.
+  """
+  if len(args) == 1 and len(kwargs) == 0:
+    if isinstance(args[0], FunctionType):
+      return PrivateMethod(args[0])
+    elif isinstance(args[0], _StaticMethod):
+      return PrivateStaticMethod(args[0].__method__)
+    elif isinstance(args[0], _Method):
+      return PrivateMethod(args[0].__method__)
+    elif isinstance(args[0], _Constant):
+      return PrivateConstant(args[0].__value__)
+    elif isinstance(args[0], _Variable):
+      var = PrivateVariable()
+      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
+        setattr(var, attr, getattr(args[0], attr))
+      return var
+    else:
+      return PrivateVariable(args[0])
+  else:
+    return PrivateVariable(*args, **kwargs)
+
+def static(*args, **kwargs):
+  if len(args) == 1 and len(kwargs) == 0:
+    if isinstance(args[0], FunctionType):
+      return PublicStaticMethod(args[0])
+    if isinstance(args[0], PublicMethod):
+      return PublicStaticMethod(args[0].__method__)
+    elif isinstance(args[0], PrivateMethod):
+      return PrivateStaticMethod(args[0].__method__)
+    elif isinstance(args[0], PublicVariable):
+      var = PublicStaticVariable()
+      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
+        setattr(var, attr, getattr(args[0], attr))
+      return var
+    elif isinstance(args[0], PrivateVariable):
+      var = PrivateStaticVariable()
+      for attr in ('__type__', '__validate__', '__default__', '__hasdefault__'):
+        setattr(var, attr, getattr(args[0], attr))
+      return var
+    elif isinstance(args[0], Constant):
+      return args[0]
+  return PublicStaticVariable(*args, **kwargs)
