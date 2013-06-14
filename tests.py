@@ -73,7 +73,7 @@ class PublicStaticMethodTestCase(unittest.TestCase):
   """
   def test_public_static_method(self):
     instance = PublicStaticMethod()
-    self.assertEquals(instance.foo(), instance.__class__)
+    self.assertEquals(instance.foo(), instance.__private__.__class__)
 
 class ProtectedVariable(Object):
   foo = protected(type=int, validate=lambda x: x == 1)

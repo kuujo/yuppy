@@ -382,7 +382,9 @@ class ObjectClass(object):
 
   def _get_static_method_wrapper(self, method):
     """Returns a class method wrapper."""
-    return classmethod(method)
+    def wrapped(instance, *args, **kwargs):
+      return method(instance.__private__.__class__, *args, **kwargs)
+    return wrapped
 
   def _get_attribute_wrapper(self, attrname):
     """Returns an attribute wrapper."""
