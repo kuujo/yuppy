@@ -30,6 +30,10 @@ time, it can be hard to tell where that bad port number came from. XPy
 can automatically type check class or instance variables _at the point
 at which they are set_ to ensure that your data is not corrupted.
 
+_Note that XPy is not currently considered feature complete. Support for
+abstract classes and members as well as improved protected and private
+member access restrictions is currently planned. Pull requests are welcome!_
+
 ### A Complete Example
 XPy is easy to use, implementing common object-oriented programming
 features in a manner that is consistent with implementations in other
@@ -56,6 +60,9 @@ class Apple(Object):
   def set_weight(self, weight):
     self.weight = weight
 
+  def __repr__(self):
+    return "%s(%s)" % (self.__class__.__name__, self.weight)
+
 class GreenApple(Apple):
   """A green apple."""
   color = const('green')
@@ -75,6 +82,37 @@ class GreenApple(Apple):
   @public
   def get_color(self):
     return self.color
+
+class AppleTree(Object):
+  """An apple tree."""
+  apples = protected(type=list)
+
+  def __init__(self):
+    self.apples = []
+
+  @protected
+  def clear_apples(self):
+    self.apples = []
+
+  @public
+  def add_apple(self, apple):
+    self.apples.append(apple)
+    return self
+
+  @public
+  def count_apples(self):
+    return len(self.apples)
+
+class GreenAppleTree(AppleTree):
+  """A green apple tree."""
+  @public
+  def add_apple(self, apple):
+    if apple.color != 'green':
+      raise ValueError("%s apples cannot be added to the green apple tree." % (apple.color,))
+
+  @public
+  def pick_apple(self):
+    return self.apples.pop()
 ```
 
 #### Testing the example
@@ -87,10 +125,10 @@ AttributeError: Cannot access protected Apple object member 'set_weight'.
 >>> apple.get_weight()
 AttributeError: Cannot access protected Apple object member 'get_weight'.
 >>> GreenApple.color
-green
+'green'
 >>> greenapple = GreenApple(2.0)
 >>> greenapple.color
-green
+'green'
 >>> greenapple.color = 'red'
 AttributeError: Cannot override GreenApple object constant 'color'.
 >>> greenapple.weight
@@ -99,6 +137,16 @@ AttributeError: GreenApple object has not attribute 'weight'.
 2.5
 >>> greenapple.set_weight()
 AttributeError: Cannot access protected GreenApple object member 'set_weight'.
+>>> tree = GreenAppleTree()
+>>> len(tree.apples)
+AttributeError: Cannot access protected GreenAppleTree object member 'apples'.
+>>> tree.count_apples()
+0
+>>> tree.apples.append(GreenApple(1.0))
+AttributeError: Cannot access protected GreenAppleTree object member 'apples'.
+>>> tree.add_apple(GreenApple(1.0))
+>>> tree.pick_apple()
+GreenApple(1.0)
 ```
 
 ## The XPy API
@@ -146,7 +194,7 @@ class RedApple(Object):
 
 ```
 >>> RedApple.color
-red
+'red'
 >>> RedApple.color = 'blue'
 AttributeError: Cannot override Apple object constant 'color'.
 ```
@@ -171,7 +219,7 @@ class Apple(Object):
 ```
 >>> apple = Apple()
 >>> apple.getcolor()
-red
+'red'
 ```
 
 ### public
@@ -205,7 +253,7 @@ class Apple(Object):
 ### protected
 Creates a protected attribute.
 
-_Note that protected member _variables_ are not currently reliable. Thus
+_Note that protected member variables are not currently reliable. Thus
 the `protected` decorator should only be used for methods._
 
 Protected members are variables that can be accessed only from within a
