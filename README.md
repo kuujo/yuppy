@@ -56,9 +56,9 @@ class Apple(Object):
   def set_weight(self, weight):
     self.weight = weight
 
-class GreenApple(Object):
+class GreenApple(Apple):
   """A green apple."""
-  color = private(const('green'))
+  color = const('green')
 
   def __init__(self, weight):
     # Green apples are .5 lbs heavier on average.
@@ -86,11 +86,13 @@ AttributeError: Invalid attribute value for 'weight'.
 AttributeError: Cannot access protected Apple object member 'set_weight'.
 >>> apple.get_weight()
 AttributeError: Cannot access protected Apple object member 'get_weight'.
+>>> GreenApple.color
+green
 >>> greenapple = GreenApple(2.0)
 >>> greenapple.color
-AttributeError: Cannot access private GreenApple object member 'color'.
->>> greenapple.get_color()
 green
+>>> greenapple.weight
+AttributeError: GreenApple object has not attribute 'weight'.
 >>> greenapple.get_weight()
 2.5
 >>> greenapple.set_weight()
