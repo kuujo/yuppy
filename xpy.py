@@ -5,7 +5,9 @@ import copy
 
 __all__ = [
   'Object',
+  'variable',
   'var',
+  'constant',
   'const',
   'method',
   'public',
@@ -394,17 +396,29 @@ class ObjectClass(object):
 
 Object = ObjectClass('Object')
 
-def var(*args, **kwargs):
+def variable(*args, **kwargs):
   """
   Creates a publicly scoped variable attribute.
   """
   return PublicVariable(*args, **kwargs)
 
-def const(value):
+def var(*args, **kwargs):
+  """
+  Alias for the variable decorator.
+  """
+  return variable(*args, **kwargs)
+
+def constant(value):
   """
   Creates a publicly scoped constant attribute.
   """
   return PublicConstant(value)
+
+def const(*args, **kwargs):
+  """
+  Alias for the constant decorator.
+  """
+  return constant(*args, **kwargs)
 
 def method(meth):
   """

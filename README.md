@@ -36,8 +36,8 @@ features in a manner that is consistent with implementations in other
 languages, making for more clear, concise, and reliable code.
 
 ```python
-# When importing xpy.*, the following variables will be imported:
-# Object, var, const, method, public, protected, private, and static.
+# When importing xpy.*, the following decorators will be imported:
+# Object, variable/var, constant/const, method, public, protected, private, and static.
 from xpy import *
 
 # XPy classes *must* extend the base xpy.Object class.
