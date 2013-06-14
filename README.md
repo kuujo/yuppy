@@ -223,6 +223,9 @@ AttributeError: Cannot access private Apple object member '_get_weight'.
 ```
 
 #### Protected Members
+_Note that protected member _variables_ are not currently reliable. Thus
+the `protected` decorator should only be used for methods._
+
 Protected members are variables that can be accessed only from within a
 class or a sub-class of the declaring class. Thus, while protected
 members have more relaxed access restriction, values are still hidden
@@ -257,7 +260,7 @@ which subsequently has access to the private `Apple.weight` attribute.
 ```python
 >>> apple = GreenApple(2.5)
 >>> apple.weight
-AttributeError: Attribute not found.
+AttributeError: GreenApple object has not attribute 'weight'.
 >>> apple._get_weight()
 AttributeError: Cannot access protected GreenApple object member '_get_weight'.
 >>> apple.get_weight()
