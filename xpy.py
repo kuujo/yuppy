@@ -156,18 +156,20 @@ class _Variable(_Attribute):
       if self.__hasdefault__:
         return self.__default__
       else:
-        raise AttributeError("%s object has not attribute '%s'." % (instance.__class__.__name__, self.__name__))
+        raise AttributeError("%s object has no attribute '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Sets the variable value."""
     instance.__dict__[self.__name__] = self._validate(value)
 
-  def __del__(self, instance):
+  def __del__(self, instance=None):
     """Deletes the variable value."""
+    if instance is None:
+      return
     try:
       del instance.__dict__[self.__name__]
     except KeyError:
-      raise AttributeError("%s object has not attribute '%s'." % (instance.__class__.__name__, self.__name__))
+      raise AttributeError("%s object has no attribute '%s'." % (instance.__class__.__name__, self.__name__))
 
 class PublicVariable(_Variable):
   """
@@ -191,6 +193,26 @@ class _StaticVariable(_Variable):
   """
   An abstract static variable attribute.
   """
+  def __get__(self, instance, owner=None):
+    """Gets the variable value."""
+    try:
+      return self.__value__
+    except AttributeError:
+      if self.__hasdefault__:
+        return self.__default__
+      else:
+        raise AttributeError("%s object has no attribute '%s'." % (owner.__class__.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """Sets the variable value."""
+    self.__value__ = self._validate(value)
+
+  def __del__(self, instance):
+    """Deletes the variable value."""
+    try:
+      del self.__value__
+    except KeyError:
+      raise AttributeError("%s object has no attribute '%s'." % (instance.__class__.__class__.__name__, self.__name__))
 
 class PublicStaticVariable(_StaticVariable):
   """
@@ -295,7 +317,10 @@ class ObjectClass(object):
         visibility = 'public'
 
       # If this is a method then wrap it. Otherwise, create an accessor.
-      if isinstance(attr, _StaticMethod):
+      if isinstance(attr, _Constant):
+        setattr(self, attrname, attr)
+        setattr(self.__class__, attrname, attr)
+      elif isinstance(attr, _StaticMethod):
         attrs[attrname] = attr.__method__
         attr = self._get_static_method_wrapper(attr.__method__)
       elif isinstance(attr, _Method):

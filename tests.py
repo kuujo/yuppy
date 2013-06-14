@@ -1,29 +1,80 @@
 import unittest
+from xpy import *
+
+class PublicVariable(Object):
+  foo = public(default=2, type=int, validate=lambda x: x == 1)
 
 class PublicVariableTestCase(unittest.TestCase):
   """
   Public member variable test case.
   """
+  def test_public_variable(self):
+    instance = PublicVariable()
+    self.assertEquals(instance.foo, 2)
+    def setfoo(value):
+      instance.foo = value
+    self.assertRaises(AttributeError, setfoo, 'foo')
+    self.assertRaises(AttributeError, setfoo, 2)
+    setfoo(1)
+    instance2 = PublicVariable()
+
+class PublicMethod(Object):
+  @public
+  def foo(self):
+    return 'bar'
 
 class PublicMethodTestCase(unittest.TestCase):
   """
   Public method test case.
   """
+  def test_public_method(self):
+    instance = PublicMethod()
+    self.assertEquals(instance.foo(), 'bar')
+
+class PublicStaticVariable(Object):
+  foo = static(public(type=int, validate=lambda x: x == 1))
 
 class PublicStaticVariableTestCase(unittest.TestCase):
   """
   Public static variable test case.
   """
+  def test_public_static_variable(self):
+    instance = PublicStaticVariable()
+    self.assertRaises(AttributeError, getattr, instance, 'foo')
+    def setfoo(value):
+      instance.foo = value
+    self.assertRaises(AttributeError, setfoo, 'foo')
+    self.assertRaises(AttributeError, setfoo, 2)
+    setfoo(1)
+    instance2 = PublicStaticVariable()
+    self.assertEquals(instance2.foo, 1)
+
+class PublicStaticMethod(Object):
+  @static
+  @public
+  def foo(self):
+    return self
 
 class PublicStaticMethodTestCase(unittest.TestCase):
   """
   Public static method test case.
   """
+  def test_public_static_method(self):
+    instance = PublicStaticMethod()
+    self.assertEquals(instance.foo(), instance.__class__)
+
+class PublicConstant(Object):
+  foo = const('bar')
 
 class PublicConstantTestCase(unittest.TestCase):
   """
   Public constant test case.
   """
+  def test_public_constant(self):
+    PublicConstant.foo
+    def setfoo(value):
+      PublicConstant.foo = value
+    self.assertRaises(AttributeError, setfoo, 'baz')
 
 class ProtectedVariableTestCase(unittest.TestCase):
   """
