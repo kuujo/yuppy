@@ -1,3 +1,5 @@
+# Copyright (c) 2013 Jordan Halterman
+# See LICENSE for details.
 from types import FunctionType, MethodType
 import copy
 
