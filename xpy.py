@@ -1,10 +1,11 @@
 # Copyright (c) 2013 Jordan Halterman
 # See LICENSE for details.
 from types import FunctionType, MethodType
-import copy
+import copy, inspect
 
 __all__ = [
   'Object',
+  'final',
   'variable',
   'var',
   'constant',
@@ -525,3 +526,13 @@ def static(*args, **kwargs):
     elif isinstance(args[0], Constant):
       return args[0]
   return PublicStaticVariable(*args, **kwargs)
+
+def final(cls):
+  """
+  Prevents a class definition from being extended.
+  """
+  if inspect.isclass(cls):
+    def create_class(*args, **kwargs):
+      return cls(*args, **kwargs)
+    return create_class
+  raise TypeError("The 'final' decorator only supports classes.")
