@@ -130,15 +130,45 @@ class ProtectedConstantTestCase(unittest.TestCase):
   Protected constant test case.
   """
 
+class PrivateVariable(Object):
+  foo = private(type=int, validate=lambda x: x == 1)
+  def setfoo(self, value):
+    self.foo = value
+  def getfoo(self):
+    return self.foo
+
 class PrivateVariableTestCase(unittest.TestCase):
   """
   Private member variable test case.
   """
+  def test_private_variable(self):
+    instance = PrivateVariable()
+    def getfoo(value):
+      instance.foo
+    def setfoo(value):
+      instance.foo = value
+    self.assertRaises(AttributeError, setfoo, 'foo')
+    self.assertRaises(AttributeError, setfoo, 2)
+    instance.setfoo(1)
+    self.assertEquals(instance.getfoo(), 1)
+
+class PrivateMethod(Object):
+  @private
+  def foo(self):
+    return 'bar'
+  def getfoo(self):
+    return self.foo()
 
 class PrivateMethodTestCase(unittest.TestCase):
   """
   Private method test case.
   """
+  def test_private_method(self):
+    instance = PrivateMethod()
+    def getfoo():
+      instance.foo
+    self.assertRaises(AttributeError, getfoo)
+    instance.getfoo()
 
 class PrivateStaticVariableTestCase(unittest.TestCase):
   """
