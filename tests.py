@@ -245,6 +245,77 @@ class PrivateConstantTestCase(unittest.TestCase):
   Private constant test case.
   """
 
+@final
+class Foo(object):
+  """A final class."""
+
+class FinalTestCase(unittest.TestCase):
+  """
+  Final test case.
+  """
+  def test_final(self):
+    def extend_final():
+      class Bar(Foo):
+        pass
+    foo = Foo()
+    self.assertRaises(TypeError, extend_final)
+
+@interface
+class FooInterface(object):
+  def foo(self):
+    pass
+  def bar(self):
+    pass
+  def baz(self):
+    pass
+
+class InterfaceTestCase(unittest.TestCase):
+  """
+  Interface test case.
+  """
+  def test_implements(self):
+    def bad_implement():
+      @implements(FooInterface)
+      class FooInterfaceObject(object):
+        pass
+    self.assertRaises(TypeError, bad_implement)
+    def good_implement():
+      @implements(FooInterface)
+      class FooInterfaceObject(object):
+        def foo(self):
+          pass
+        def bar(self):
+          pass
+        def baz(self):
+          pass
+    good_implement()
+
+  def test_good_instanceof(self):
+    def implement():
+      @implements(FooInterface)
+      class FooInterfaceObject(object):
+        def foo(self):
+          pass
+        def bar(self):
+          pass
+        def baz(self):
+          pass
+      return FooInterfaceObject()
+    instance = implement()
+    self.assertTrue(instanceof(instance, FooInterface, True))
+    self.assertTrue(instanceof(instance, FooInterface, False))
+
+  def test_bad_instanceof(self):
+    def implement():
+      class FooInterfaceObject(object):
+        def bar(self):
+          pass
+        def baz(self):
+          pass
+      return FooInterfaceObject()
+    instance = implement()
+    self.assertFalse(instanceof(instance, FooInterface, False))
+
 def all_tests():
   suite = unittest.TestSuite()
   suite.addTest(unittest.makeSuite(ConstantTestCase))
@@ -259,5 +330,6 @@ def all_tests():
   suite.addTest(unittest.makeSuite(PrivateVariableTestCase))
   suite.addTest(unittest.makeSuite(PrivateMethodTestCase))
   suite.addTest(unittest.makeSuite(PrivateStaticVariableTestCase))
-  suite.addTest(unittest.makeSuite(PrivateStaticMethodTestCase))
+  suite.addTest(unittest.makeSuite(FinalTestCase))
+  suite.addTest(unittest.makeSuite(InterfaceTestCase))
   return suite
