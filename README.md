@@ -17,21 +17,23 @@ comprimising usability.
 -------------------
 1. [Introduction](#but-encapsulation-is-bad)
 1. [A Complete Example](#a-complete-example)
+1. [Class Decorators](#class-decorators)
+   * [Encapsulation](#encapsulate)
+   * [Abstract Classes](#abstract)
+   * [Final Classes](#final)
+1. [Member Decorators](#member-decorators)
+   * [Variable Attributes](#variable)
+   * [Constant Attributes](#constant)
+   * [Method Attributes](#method)
+   * [Public Attributes](#public)
+   * [Protected Attributes](#protected)
+   * [Private Attributes](#private)
+   * [Static Attributes](#static)
+   * [Type Validation](#type-validation)
 1. [Interfaces](#interfaces)
    * [Interfaces](#interface)
    * [Implements](#implements)
    * [Type Checking](#instanceof)
-   * [Abstract Classes](#abstract)
-1. [Encapsulation](#encapsulation)
-   * [Class Variables](#variable)
-   * [Class Constants](#constant)
-   * [Class Methods](#method)
-   * [Public Members](#public)
-   * [Protected Members](#protected)
-   * [Private Members](#private)
-   * [Static Members](#static)
-   * [Final Classes](#final)
-   * [Type Validation](#type-validation)
 
 ##### _"But encapsulation is bad!"_
 But options are good. Sure, Python is a dynamic language, and often its
@@ -199,99 +201,34 @@ AttributeError: Cannot access protected GreenAppleTree object member 'apples'.
 GreenApple(1.0)
 ```
 
-## Interfaces
-Interfaces are a partcilarly useful feature with Python. Since Python
-promotes duck typing, Yuppy interfaces can be used to ensure that any
-object walks and talks like a duck. For this reason, Yuppy interface
-evaluation supports both explicit interface implementation checks _and_
-implicit interface implementation checks, or duck typing.
+## Class Decorators
+Yuppy primarily uses decorators to decorate classes and thus hide
+otherwise public class attributes.
 
-### interface
-Declares a class definition to be an interface.
+### encapsulate
+Declares a class definition to be encapsulated.
 
-Abstract interface attributes are declared by simply creating them. Yuppy
-will evaluate the interface for any public attributes and consider those
-to be required of any implementing classes.
+```
+encapsulate(cls)
+```
+
+_This decorator is required in order to encapsulate class members._
+Calling this decorator will cause the given class to be dynamically
+extended by a class that monitors instance attribute access. Internally,
+the wrapper class exposes Python's magic `__getattribute__`, `__setattr__`,
+and `__delattr__` methods to prevent protected or private attributes
+from being accessed.
 
 ##### Example
-
 ```python
-from yuppy import *
+@encapsulate
+class Apple(object):
+  color = const('red')
+  weight = private(type=float)
 
-@interface
-class AppleInterface(object):
-  """An apple interface."""
-  def get_color(self):
-    """Returns the apple color."""
-
+  @public
   def get_weight(self):
-    """Returns the apple weight."""
-```
-
-### implements
-Declares a class definition to implement an interface.
-
-When a class implements an interface, it must define all abstract attributes
-of that interface. Yuppy will automatically evaluate the class definition
-to ensure it conforms to the indicated interface.
-
-##### Example
-Continuing with the previous example, we can implement the `AppleInterface`
-interface.
-
-```
->>> @implements(AppleInterface)
-... class Apple(object):
-...   """An apple."""
-...
-TypeError: 'Apple' definition missing attribute 'get_color' from 'AppleInterface' interface.
-```
-
-Note that if we don't implement the `AppleInterface` attributes a `TypeError`
-will be raised. Let's try that again.
-
-```
->>> @implements(AppleInterface)
-... class Apple(object):
-...   """An apple."""
-...   color = const('red')
-...   weight = const(2.0)
-...   def get_color(self):
-...     """Returns the apple color."""
-...     return self.color
-...   def get_weight(self):
-...     """Returns the apple weight."""
-...     return self.weight
-...
->>> apple = Apple()
->>> apple.get_color()
-'red'
-```
-
-### instanceof
-Determines whether an instance's class implements an interface.
-
-```
-implements(instance, interface[, ducktype=True])
-```
-
-Finally, it's important that we be able to evaluate objects for adherence
-to any interface requirements. The `instanceof` function behaves similarly
-to Python's built-in `isinstance` function, but for Yuppy interfaces.
-However, _Yuppy's implementation can also evaluate interface implementation
-based on duck typing._ This means that object classes do not necessarily
-have to implement a specific interface, they simply need to behave in the
-manner that the interface requires.
-
-```
->>> from yuppy import instanceof
->>> apple = Apple()
->>> instanceof(apple, AppleInterface)
-True
->>> instanceof(apple, AppleInterface, False)
-True
->>> instanceof(apple, Apple)
-True
+    return self.weight
 ```
 
 ### abstract
@@ -304,6 +241,7 @@ abstract(cls)
 Abstract classes are classes that cannot themselves be instantiates, but
 can be extended and instantiated.
 
+##### Example
 ```python
 from yuppy import *
 
@@ -335,7 +273,35 @@ We will be able to create instances of `GreenApple`, which inherits from
 TypeError: Cannot instantiate abstract class 'Apple'.
 ```
 
-## Encapsulation
+### final
+Declares a class definition to be final.
+
+The final Yuppy decorator is, well, `final`, which allows users to define
+classes that _cannot be extended._ This is a common feature in several
+other object-oriented languages.
+```
+final(cls)
+```
+
+##### Example
+
+```python
+from yuppy import *
+
+@final
+class Apple(object):
+  weight = private(type=float, default=None)
+```
+
+```
+>>> apple = Apple()
+>>> class GreenApple(Apple):
+...   pass
+...
+TypeError: ...
+```
+
+## Member Decorators
 
 ### variable
 Creates a public variable attribute.
@@ -591,34 +557,6 @@ None
 2.0
 ```
 
-### final
-Declares a class definition to be final.
-
-The final Yuppy decorator is, well, `final`, which allows users to define
-classes that _cannot be extended._ This is a common feature in several
-other object-oriented languages.
-```
-final(cls)
-```
-
-##### Example
-
-```python
-from yuppy import *
-
-@final
-class Apple(object):
-  weight = private(type=float, default=None)
-```
-
-```
->>> apple = Apple()
->>> class GreenApple(Apple):
-...   pass
-...
-TypeError: ...
-```
-
 ### Type Validation
 Yuppy can perform direct type checking and arbitrary execution of validation
 callbacks. When a mutable Yuppy attribute is set, validators will automatically
@@ -652,6 +590,105 @@ is provided.
 >>> apple = Apple(1)
 >>> apple = Apple('one')
 AttributeError: Invalid attribute value for 'weight'.
+```
+
+## Interfaces
+Interfaces are a partcilarly useful feature with Python. Since Python
+promotes duck typing, Yuppy interfaces can be used to ensure that any
+object walks and talks like a duck. For this reason, Yuppy interface
+evaluation supports both explicit interface implementation checks _and_
+implicit interface implementation checks, or duck typing.
+
+### interface
+Declares a class definition to be an interface.
+
+```
+interface(cls)
+```
+
+Abstract interface attributes are declared by simply creating them. Yuppy
+will evaluate the interface for any public attributes and consider those
+to be required of any implementing classes.
+
+##### Example
+
+```python
+from yuppy import *
+
+@interface
+class AppleInterface(object):
+  """An apple interface."""
+  def get_color(self):
+    """Returns the apple color."""
+
+  def get_weight(self):
+    """Returns the apple weight."""
+```
+
+### implements
+Declares a class definition to implement an interface.
+
+When a class implements an interface, it must define all abstract attributes
+of that interface. Yuppy will automatically evaluate the class definition
+to ensure it conforms to the indicated interface.
+
+##### Example
+Continuing with the previous example, we can implement the `AppleInterface`
+interface.
+
+```
+>>> @implements(AppleInterface)
+... class Apple(object):
+...   """An apple."""
+...
+TypeError: 'Apple' definition missing attribute 'get_color' from 'AppleInterface' interface.
+```
+
+Note that if we don't implement the `AppleInterface` attributes a `TypeError`
+will be raised. Let's try that again.
+
+```
+>>> @implements(AppleInterface)
+... class Apple(object):
+...   """An apple."""
+...   color = const('red')
+...   weight = const(2.0)
+...   def get_color(self):
+...     """Returns the apple color."""
+...     return self.color
+...   def get_weight(self):
+...     """Returns the apple weight."""
+...     return self.weight
+...
+>>> apple = Apple()
+>>> apple.get_color()
+'red'
+```
+
+### instanceof
+Determines whether an instance's class implements an interface.
+
+```
+implements(instance, interface[, ducktype=True])
+```
+
+Finally, it's important that we be able to evaluate objects for adherence
+to any interface requirements. The `instanceof` function behaves similarly
+to Python's built-in `isinstance` function, but for Yuppy interfaces.
+However, _Yuppy's implementation can also evaluate interface implementation
+based on duck typing._ This means that object classes do not necessarily
+have to implement a specific interface, they simply need to behave in the
+manner that the interface requires.
+
+```
+>>> from yuppy import instanceof
+>>> apple = Apple()
+>>> instanceof(apple, AppleInterface)
+True
+>>> instanceof(apple, AppleInterface, False)
+True
+>>> instanceof(apple, Apple)
+True
 ```
 
 _Copyright (c) 2013 Jordan Halterman_
