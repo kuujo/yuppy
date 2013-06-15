@@ -12,6 +12,26 @@ be used when developing with Python, it can certainly improve the
 integrity of your data and the stability of your code without
 comprimising usability.
 
+# Table of contents
+-------------------
+1. [Overview](#butencapsulationisbad)
+   * [But Why?](#butencapsulationisbad)
+   * [A Complete Example](#acompleteexample)
+1. [Encapsulation](#thexpyapi)
+   * [Class Variables](#variable)
+   * [Class Constants](#constant)
+   * [Class Methods](#method)
+   * [Public Members](#public)
+   * [Protected Members](#protected)
+   * [Private Members](#private)
+   * [Static Members](#static)
+   * [Final Classes](#final)
+   * [Type Validation](#typevalidation)
+1. [Interfaces](#interfaces)
+   * [Interface](#interface)
+   * [Implements](#implements)
+   * [Type Checking](#instanceof)
+
 ##### _"But encapsulation is bad!"_
 But options are good. Sure, Python is a dynamic language, and often its
 flexibility can be used to creatively conquer complex problems (indeed,
@@ -184,9 +204,10 @@ use cases. Note that all non-access related decorators will always return
 a public attribute by default unless an access restricted variable is passed
 as the first argument.
 
-### var
+### variable
 Creates a public variable attribute.
 ```
+variable([default=None[, type=None[, validate=None]]])
 var([default=None[, type=None[, validate=None]]])
 ```
 
@@ -203,7 +224,7 @@ class Apple(object):
 >>> apple = Apple()
 ```
 
-### const
+### constant
 Creates a public constant attribute.
 
 Constants are attributes which have a permanent value. They can be used for
@@ -212,6 +233,7 @@ application port number, for instance. With XPy we can use the `const`
 decorator to create a constant, passing a single permanent value to the
 constructor.
 ```
+constant(value)
 const(value)
 ```
 
