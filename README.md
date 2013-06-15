@@ -18,9 +18,10 @@ comprimising usability.
 1. [Introduction](#but-encapsulation-is-bad)
 1. [A Complete Example](#a-complete-example)
 1. [Interfaces](#interfaces)
-   * [Interface](#interface)
+   * [Interfaces](#interface)
    * [Implements](#implements)
    * [Type Checking](#instanceof)
+   * [Abstract Classes](#abstract)
 1. [Encapsulation](#encapsulation)
    * [Class Variables](#variable)
    * [Class Constants](#constant)
@@ -291,6 +292,47 @@ True
 True
 >>> instanceof(apple, Apple)
 True
+```
+
+### abstract
+Creates an abstract class.
+
+```
+abstract(cls)
+```
+
+Abstract classes are classes that cannot themselves be instantiates, but
+can be extended and instantiated.
+
+```python
+from yuppy import *
+
+@abstract
+class Apple(object):
+  """An abstract apple."""
+  weight = protected(type=float)
+
+  def get_weight(self):
+    return self.weight
+
+  def set_weight(self, weight):
+    self.weight = weight
+
+class GreenApple(Apple):
+  """A concrete green apple."""
+```
+
+We will be able to create instances of `GreenApple`, which inherits from
+`Apple`, but any attempts to instantiate an `Apple` will result in a
+`TypeError`.
+
+```
+>>> apple = GreenApple()
+>>> apple.set_weight(1.0)
+>>> apple.get_weight()
+1.0
+>>> apple = Apple()
+TypeError: Cannot instantiate abstract class 'Apple'.
 ```
 
 ## Encapsulation

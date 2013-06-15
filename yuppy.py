@@ -15,6 +15,7 @@ __all__ = [
   'private',
   'static',
   'final',
+  'abstract',
   'interface',
   'implements',
   'instanceof',
@@ -507,6 +508,30 @@ def instanceof(instance, interface, ducktype=True):
     except AttributeError:
       return False
 
+def abstract(cls):
+  """
+  Creates an abstract class.
+  """
+  class Abstract(cls):
+    """
+    A class encapsulator.
+    """
+    def __init__(self, *args, **kwargs):
+      if type(self) is AbstractClass:
+        raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
+      self.__dict__['__private__'] = cls(*args, **kwargs)
+
+    def __getattr__(self, name):
+      return getattr(self.__private__, name)
+
+    def __setattr__(self, name, value):
+      return setattr(self.__private__, name, value)
+
+    def __delattr__(self, name):
+      return delattr(self.__private__, name)
+
+  return Abstract
+
 def encapsulate(cls):
   """
   Encapsulates a class.
@@ -520,7 +545,7 @@ def encapsulate(cls):
   current = cls
   while True:
     try:
-      if current.__bases__[0].__name__ == 'Encapsulator':
+      if current.__bases__[0].__name__ == 'Object':
         current.__bases__ = current.__bases__[0].__bases__
     except IndexError:
       break
@@ -568,7 +593,7 @@ def encapsulate(cls):
   def is_child(self, _cls):
     def find_root(_cls):
       for base in _cls.__bases__:
-        if base is Encapsulator:
+        if base is Object:
           return find_root(base)
       return _cls
     return cls in find_root(_cls).__bases__
@@ -578,20 +603,20 @@ def encapsulate(cls):
     if visibility == 'public':
       return callback(self.__private__, attr, *args)
     elif visibility == 'protected':
-      if self.__class__ is not Encapsulator and is_child(self, self.__class__):
+      if self.__class__ is not Object and is_child(self, self.__class__):
         return callback(self.__private__, attr, *args)
       else:
         raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
     else:
       raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
 
-  class Encapsulator(cls):
+  class Object(cls):
     """
     A class encapsulator.
     """
     def __init__(self, *args, **kwargs):
       self.__dict__['__private__'] = cls(*args, **kwargs)
-      super(Encapsulator, self).__init__(*args, **kwargs)
+      super(Object, self).__init__(*args, **kwargs)
 
     def __getattribute__(self, name):
       """
@@ -622,15 +647,15 @@ def encapsulate(cls):
       if value.__visibility__ == 'private':
         attribute = _PrivateAttribute()
         attribute.__name__ = key
-        setattr(Encapsulator, key, attribute)
+        setattr(Object, key, attribute)
       elif value.__visibility__ == 'protected':
         attribute = _ProtectedAttribute()
         attribute.__name__ = key
-        setattr(Encapsulator, key, attribute)
+        setattr(Object, key, attribute)
     except AttributeError:
       continue
 
-  return Encapsulator
+  return Object
 
 class _AbstractAttribute(_Attribute):
   """An abstract attribute."""
