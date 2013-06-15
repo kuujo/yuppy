@@ -39,13 +39,21 @@ XPy is easy to use, implementing common object-oriented programming
 features in a manner that is consistent with implementations in other
 languages, making for more clear, concise, and reliable code.
 
+With XPy, you do not have to extend a special base class. Simply use
+the `encapsulate` decorator on any class. Internally, XPy wraps the class,
+returning a child of the class that protects internal class members.
+Sure, there's always a way around everything in Python, but XPy goes to
+a long way towards protecting internall object data, and circumventing
+the XPy API would be more work that it's worth.
+
 ```python
 # When importing xpy.*, the following decorators will be imported:
-# Object, variable/var, constant/const, method, public, protected, private, and static.
+# encapsulate, variable/var, constant/const, method, public, protected, private, and static.
 from xpy import *
 
-# XPy classes *must* extend the base xpy.Object class.
-class Apple(Object):
+# Use the 'encapsulate' decorator to decorate the class.
+@encapsulate
+class Apple(object):
   """An abstract apple."""
   weight = private(type=float)
 
@@ -63,6 +71,7 @@ class Apple(Object):
   def __repr__(self):
     return "%s(%s)" % (self.__class__.__name__, self.weight)
 
+@encapsulate
 class GreenApple(Apple):
   """A green apple."""
   color = const('green')
@@ -83,7 +92,8 @@ class GreenApple(Apple):
   def get_color(self):
     return self.color
 
-class AppleTree(Object):
+@encapsulate
+class AppleTree(object):
   """An apple tree."""
   apples = protected(type=list)
 
@@ -103,6 +113,7 @@ class AppleTree(Object):
   def count_apples(self):
     return len(self.apples)
 
+@encapsulate
 class GreenAppleTree(AppleTree):
   """A green apple tree."""
   @public
@@ -165,7 +176,9 @@ var([default=None[, type=None[, validate=None]]])
 ##### Example
 ```python
 from xpy import *
-class Apple(Object):
+
+@encapsulate
+class Apple(object):
   foo = var(type=int, default=None, validate=lambda x: x == 1)
 ```
 
@@ -188,7 +201,9 @@ const(value)
 ##### Example
 ```python
 from xpy import *
-class RedApple(Object):
+
+@encapsulate
+class RedApple(object):
   color = const('red')
 ```
 
@@ -208,7 +223,9 @@ method(callback)
 ##### Example
 ```python
 from xpy import *
-class Apple(Object):
+
+@encapsulate
+class Apple(object):
   color = private(default='red')
 
   @method
@@ -239,7 +256,8 @@ public([value=None[, default=None[, type=None[, validate=None]]]])
 ```python
 from xpy import *
 
-class Apple(Object):
+@encapsulate
+class Apple(object):
   """An abstract apple."""
   # The two following lines result in the exact same property.
   foo = var(type=int)
@@ -274,7 +292,8 @@ protected([value=None[, default=None[, type=None[, validate=None]]]])
 ```python
 from xpy import *
 
-class Apple(Object):
+@encapsulate
+class Apple(object):
   """An abstract apple."""
   weight = private(type=float, default=None)
 
@@ -285,6 +304,7 @@ class Apple(Object):
   def _get_weight(self):
     return self.weight
 
+@encapsulate
 class GreenApple(Apple):
   """A green apple."""
   @public
@@ -328,7 +348,8 @@ private([value=None[, default=None[, type=None[, validate=None]]]])
 ```python
 from xpy import *
 
-class Apple(Object):
+@encapsulate
+class Apple(object):
   """An abstract apple."""
   weight = private(type=float, default=None)
 
@@ -379,7 +400,8 @@ static([value=None[, default=None[, type=None[, validate=None]]]])
 ```python
 from xpy import *
 
-class Apple(Object):
+@encapsulate
+class Apple(object):
   """An abstract apple."""
   weight = static(type=float, default=None)
 ```
@@ -415,7 +437,8 @@ constructor.
 ```python
 from xpy import *
 
-class Apple(Object):
+@encapsulate
+class Apple(object):
   """An abstract apple."""
   weight = var(type=float)
 
