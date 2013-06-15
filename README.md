@@ -1,7 +1,6 @@
-Yuppy
------
-
+## Yuppy
 #### Python Programming for the Privileged Class
+-----
 
 _Yuppy is released under the [MIT License](http://opensource.org/licenses/MIT)._
 
@@ -14,9 +13,9 @@ be used when developing with Python, it can certainly improve the
 integrity of your data and the stability of your code without
 comprimising usability.
 
-## Table of contents
+### Table of contents
 -------------------
-1. [Overview](#but-encapsulation-is-bad)
+1. [Introduction](#but-encapsulation-is-bad)
 1. [A Complete Example](#a-complete-example)
 1. [Interfaces](#interfaces)
    * [Interface](#interface)
