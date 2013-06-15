@@ -16,7 +16,11 @@ comprimising usability.
 -------------------
 1. [Overview](#but-encapsulation-is-bad)
 1. [A Complete Example](#a-complete-example)
-1. [Encapsulation](#the-xpy-api)
+1. [Interfaces](#interfaces)
+   * [Interface](#interface)
+   * [Implements](#implements)
+   * [Type Checking](#instanceof)
+1. [Encapsulation](#encapsulation)
    * [Class Variables](#variable)
    * [Class Constants](#constant)
    * [Class Methods](#method)
@@ -26,10 +30,6 @@ comprimising usability.
    * [Static Members](#static)
    * [Final Classes](#final)
    * [Type Validation](#type-validation)
-1. [Interfaces](#interfaces)
-   * [Interface](#interface)
-   * [Implements](#implements)
-   * [Type Checking](#instanceof)
 
 ##### _"But encapsulation is bad!"_
 But options are good. Sure, Python is a dynamic language, and often its
@@ -196,12 +196,102 @@ AttributeError: Cannot access protected GreenAppleTree object member 'apples'.
 GreenApple(1.0)
 ```
 
-## The XPy API
-The API consists of only a few consise functions. These functions are largely
-intended to be used as decorators, but many of them can support a variety of
-use cases. Note that all non-access related decorators will always return
-a public attribute by default unless an access restricted variable is passed
-as the first argument.
+## Interfaces
+Interfaces are a partcilarly useful feature with Python. Since Python
+promotes duck typing, XPy interfaces can be used to ensure that any
+object walks and talks like a duck. For this reason, XPy interface
+evaluation supports both explicit interface implementation checks _and_
+implicit interface implementation checks, or duck typing.
+
+### interface
+Declares a class definition to be an interface.
+
+Abstract interface attributes are declared by simply creating them. XPy
+will evaluate the interface for any public attributes and consider those
+to be required of any implementing classes.
+
+##### Example
+
+```python
+from xpy import *
+
+@interface
+class AppleInterface(object):
+  """An apple interface."""
+  def get_color(self):
+    """Returns the apple color."""
+
+  def get_weight(self):
+    """Returns the apple weight."""
+```
+
+### implements
+Declares a class definition to implement an interface.
+
+When a class implements an interface, it must define all abstract attributes
+of that interface. XPy will automatically evaluate the class definition
+to ensure it conforms to the indicated interface.
+
+##### Example
+Continuing with the previous example, we can implement the `AppleInterface`
+interface.
+
+```
+>>> @implements(AppleInterface)
+... class Apple(object):
+...   """An apple."""
+...
+TypeError: 'Apple' definition missing attribute 'get_color' from 'AppleInterface' interface.
+```
+
+Note that if we don't implement the `AppleInterface` attributes a `TypeError`
+will be raised. Let's try that again.
+
+```
+>>> @implements(AppleInterface)
+... class Apple(object):
+...   """An apple."""
+...   color = const('red')
+...   weight = const(2.0)
+...   def get_color(self):
+...     """Returns the apple color."""
+...     return self.color
+...   def get_weight(self):
+...     """Returns the apple weight."""
+...     return self.weight
+...
+>>> apple = Apple()
+>>> apple.get_color()
+'red'
+```
+
+### instanceof
+Determines whether an instance's class implements an interface.
+
+```
+implements(instance, interface[, ducktype=True])
+```
+
+Finally, it's important that we be able to evaluate objects for adherence
+to any interface requirements. The `instanceof` function behaves similarly
+to Python's built-in `isinstance` function, but for XPy interfaces.
+However, _XPy's implementation can also evaluate interface implementation
+based on duck typing._ This means that object classes do not necessarily
+have to implement a specific interface, they simply need to behave in the
+manner that the interface requires.
+
+```
+>>> from xpy import instanceof
+>>> apple = Apple()
+>>> instanceof(apple, AppleInterface)
+True
+>>> instanceof(apple, AppleInterface, False)
+True
+>>> instanceof(apple, Apple)
+True
+```
+
+## Encapsulation
 
 ### variable
 Creates a public variable attribute.
@@ -518,101 +608,6 @@ is provided.
 >>> apple = Apple(1)
 >>> apple = Apple('one')
 AttributeError: Invalid attribute value for 'weight'.
-```
-
-## Interfaces
-Interfaces are a partcilarly useful feature with Python. Since Python
-promotes duck typing, XPy interfaces can be used to ensure that any
-object walks and talks like a duck. For this reason, XPy interface
-evaluation supports both explicit interface implementation checks _and_
-implicit interface implementation checks, or duck typing.
-
-### interface
-Declares a class definition to be an interface.
-
-Abstract interface attributes are declared by simply creating them. XPy
-will evaluate the interface for any public attributes and consider those
-to be required of any implementing classes.
-
-##### Example
-
-```python
-from xpy import *
-
-@interface
-class AppleInterface(object):
-  """An apple interface."""
-  def get_color(self):
-    """Returns the apple color."""
-
-  def get_weight(self):
-    """Returns the apple weight."""
-```
-
-### implements
-Declares a class definition to implement an interface.
-
-When a class implements an interface, it must define all abstract attributes
-of that interface. XPy will automatically evaluate the class definition
-to ensure it conforms to the indicated interface.
-
-##### Example
-Continuing with the previous example, we can implement the `AppleInterface`
-interface.
-
-```
->>> @implements(AppleInterface)
-... class Apple(object):
-...   """An apple."""
-...
-TypeError: 'Apple' definition missing attribute 'get_color' from 'AppleInterface' interface.
-```
-
-Note that if we don't implement the `AppleInterface` attributes a `TypeError`
-will be raised. Let's try that again.
-
-```
->>> @implements(AppleInterface)
-... class Apple(object):
-...   """An apple."""
-...   color = const('red')
-...   weight = const(2.0)
-...   def get_color(self):
-...     """Returns the apple color."""
-...     return self.color
-...   def get_weight(self):
-...     """Returns the apple weight."""
-...     return self.weight
-...
->>> apple = Apple()
->>> apple.get_color()
-'red'
-```
-
-### instanceof
-Determines whether an instance's class implements an interface.
-
-```
-implements(instance, interface[, ducktype=True])
-```
-
-Finally, it's important that we be able to evaluate objects for adherence
-to any interface requirements. The `instanceof` function behaves similarly
-to Python's built-in `isinstance` function, but for XPy interfaces.
-However, _XPy's implementation can also evaluate interface implementation
-based on duck typing._ This means that object classes do not necessarily
-have to implement a specific interface, they simply need to behave in the
-manner that the interface requires.
-
-```
->>> from xpy import instanceof
->>> apple = Apple()
->>> instanceof(apple, AppleInterface)
-True
->>> instanceof(apple, AppleInterface, False)
-True
->>> instanceof(apple, Apple)
-True
 ```
 
 _Copyright (c) 2013 Jordan Halterman_
