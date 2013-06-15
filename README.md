@@ -16,7 +16,8 @@ comprimising usability.
 
 _I have heard and understand the arguments against encapsulation in Python.
 Besides, true encapsulation is obviously impossible. But I do believe
-there is a time and a place for this. Yuppy should be used responsibly,
+there is a time and a place for this, and I learned a lot about the
+language in writing this library. Yuppy should be used responsibly,
 meaning most features should not be used in libraries with any significant
 user base._
 
