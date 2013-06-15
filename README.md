@@ -345,10 +345,24 @@ class RedApple(object):
   color = const('red')
 ```
 
+Note that while the class constant can be overridden, the instance constant
+will not change regardless of the class constant value.
+
 ```
 >>> RedApple.color
 'red'
+>>> apple = RedApple()
+>>> apple.color
+'red'
 >>> RedApple.color = 'blue'
+>>> RedApple.color
+'blue'
+>>> apple.color
+'red'
+>>> apple = RedApple()
+>>> apple.color
+'red'
+>>> apple.color = 'blue'
 AttributeError: Cannot override Apple object constant 'color'.
 ```
 
