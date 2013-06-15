@@ -123,21 +123,22 @@ class ProtectedVariableTestCase(unittest.TestCase):
       instance2.foo = value
     self.assertRaises(AttributeError, getfoo)
     self.assertRaises(AttributeError, setfoo, 'foo')
-    instance2.extfoo() # This fails!
+    instance2.setfoo(1)
+    self.assertEquals(instance2.extfoo(), 1)
 
 @encapsulate
 class ProtectedMethod(object):
   @protected
-  def foo(self):
+  def foobar(self):
     return 'bar'
   def getfoo(self):
-    return self.foo()
+    return self.foobar()
 
 @encapsulate
 class ExtendedMethod(ProtectedMethod):
   @public
   def extfoo(self):
-    return self.foo()
+    return self.foobar()
 
 class ProtectedMethodTestCase(unittest.TestCase):
   """
