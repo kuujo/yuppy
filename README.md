@@ -14,6 +14,12 @@ certainly not always be used when developing with Python, it can certainly
 improve the integrity of your data and the stability of your code without
 comprimising usability.
 
+_I have heard and understand the arguments against encapsulation in Python.
+Besides, true encapsulation is obviously impossible. But I do believe
+there is a time and a place for this. Yuppy should be used responsibly,
+meaning most features should not be used in libraries with any significant
+user base._
+
 ### Table of contents
 -------------------
 1. [Introduction](#but-encapsulation-is-bad)
