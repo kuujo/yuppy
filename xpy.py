@@ -15,6 +15,9 @@ __all__ = [
   'private',
   'static',
   'final',
+  'interface',
+  'implements',
+  'instanceof',
 ]
 
 class _Attribute(object):
@@ -145,6 +148,11 @@ class _Variable(_Attribute):
     """
     if self.__type__ is not None:
       if not isinstance(value, self.__type__):
+        try:
+          if self.__type__.__interface__:
+            return instanceof(value, self.__type__.__interface__)
+        except AttributeError:
+          pass
         if not isinstance(self.__type__, (list, tuple)):
           try:
             value = self.__type__(value)
@@ -457,6 +465,7 @@ def interface(cls):
   def classnew(cls, *args, **kwargs):
     raise TypeError("Cannot instantiate interface '%s'." % (cls.__name__,))
   cls.__new__ = classmethod(classnew)
+  cls.__interface__ = True
   return cls
 
 def implements(interface):

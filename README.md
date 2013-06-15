@@ -92,7 +92,17 @@ class GreenApple(Apple):
   def get_color(self):
     return self.color
 
+@interface
+class AppleTreeInterface(object):
+  """An apple tree interface."""
+  def add_apple(self, apple):
+    """Adds an apple to the tree."""
+
+  def count_apples(self):
+    """Returns the number of apples on the tree."""
+
 @encapsulate
+@implements(AppleTreeInterface)
 class AppleTree(object):
   """An apple tree."""
   apples = protected(type=list)
@@ -113,7 +123,14 @@ class AppleTree(object):
   def count_apples(self):
     return len(self.apples)
 
+@interface
+class GreenAppleTreeInterface(AppleTreeInterface):
+  """A green apple tree interface."""
+  def pick_apple(self):
+    """Picks an apple from the tree."""
+
 @encapsulate
+@implements(GreenAppleTreeInterface)
 class GreenAppleTree(AppleTree):
   """A green apple tree."""
   @public
@@ -422,6 +439,34 @@ None
 2.0
 ```
 
+### final
+Declares a class definition to be final.
+
+The final XPy decorator is, well, `final`, which allows users to define
+classes that _cannot be extended._ This is a common feature in several
+other object-oriented languages.
+```
+final(cls)
+```
+
+##### Example
+
+```python
+from xpy import *
+
+@final
+class Apple(object):
+  weight = private(type=float, default=None)
+```
+
+```
+>>> apple = Apple()
+>>> class GreenApple(Apple):
+...   pass
+...
+TypeError: ...
+```
+
 ### Type Validation
 XPy can perform direct type checking and arbitrary execution of validation
 callbacks. When a mutable XPy attribute is set, validators will automatically
@@ -455,6 +500,101 @@ is provided.
 >>> apple = Apple(1)
 >>> apple = Apple('one')
 AttributeError: Invalid attribute value for 'weight'.
+```
+
+### Interfaces
+Interfaces are a partcilarly useful feature with Python. Since Python
+promotes duck typing, XPy interfaces can be used to ensure that any
+object walks and talks like a duck. For this reason, XPy interface
+evaluation supports both explicit interface implementation checks _and_
+implicit interface implementation checks, or duck typing.
+
+#### interface
+Declares a class definition to be an interface.
+
+Abstract interface attributes are declared by simply creating them. XPy
+will evaluate the interface for any public attributes and consider those
+to be required of any implementing classes.
+
+##### Example
+
+```python
+from xpy import *
+
+@interface
+class AppleInterface(object):
+  """An apple interface."""
+  def get_color(self):
+    """Returns the apple color."""
+
+  def get_weight(self):
+    """Returns the apple weight."""
+```
+
+#### implements
+Declares a class definition to implement an interface.
+
+When a class implements an interface, it must define all abstract attributes
+of that interface. XPy will automatically evaluate the class definition
+to ensure it conforms to the indicated interface.
+
+##### Example
+Continuing with the previous example, we can implement the `AppleInterface`
+interface.
+
+```
+>>> @implements(AppleInterface)
+... class Apple(object):
+...   """An apple."""
+...
+TypeError: 'Apple' definition missing attribute 'get_color' from 'AppleInterface' interface.
+```
+
+Note that if we don't implement the `AppleInterface` attributes a `TypeError`
+will be raised. Let's try that again.
+
+```
+>>> @implements(AppleInterface)
+... class Apple(object):
+...   """An apple."""
+...   color = const('red')
+...   weight = const(2.0)
+...   def get_color(self):
+...     """Returns the apple color."""
+...     return self.color
+...   def get_weight(self):
+...     """Returns the apple weight."""
+...     return self.weight
+...
+>>> apple = Apple()
+>>> apple.get_color()
+'red'
+```
+
+#### instanceof
+Determines whether an instance's class implements an interface.
+
+```
+implements(instance, interface[, ducktype=True])
+```
+
+Finally, it's important that we be able to evaluate objects for adherence
+to any interface requirements. The `instanceof` function behaves similarly
+to Python's built-in `isinstance` function, but for XPy interfaces.
+However, _XPy's implementation can also evaluate interface implementation
+based on duck typing._ This means that object classes do not necessarily
+have to implement a specific interface, they simply need to behave in the
+manner that the interface requires.
+
+```
+>>> from xpy import instanceof
+>>> apple = Apple()
+>>> instanceof(apple, AppleInterface)
+True
+>>> instanceof(apple, AppleInterface, False)
+True
+>>> instanceof(apple, Apple)
+True
 ```
 
 _Copyright (c) 2013 Jordan Halterman_
