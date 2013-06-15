@@ -12,11 +12,11 @@ be used when developing with Python, it can certainly improve the
 integrity of your data and the stability of your code without
 comprimising usability.
 
-# Table of contents
+## Table of contents
 -------------------
 1. [Overview](#but-encapsulation-is-bad)
 1. [A Complete Example](#a-complete-example)
-1. [Encapsulation](#thexpyapi)
+1. [Encapsulation](#the-xpy-api)
    * [Class Variables](#variable)
    * [Class Constants](#constant)
    * [Class Methods](#method)
@@ -520,14 +520,14 @@ is provided.
 AttributeError: Invalid attribute value for 'weight'.
 ```
 
-### Interfaces
+## Interfaces
 Interfaces are a partcilarly useful feature with Python. Since Python
 promotes duck typing, XPy interfaces can be used to ensure that any
 object walks and talks like a duck. For this reason, XPy interface
 evaluation supports both explicit interface implementation checks _and_
 implicit interface implementation checks, or duck typing.
 
-#### interface
+### interface
 Declares a class definition to be an interface.
 
 Abstract interface attributes are declared by simply creating them. XPy
@@ -549,7 +549,7 @@ class AppleInterface(object):
     """Returns the apple weight."""
 ```
 
-#### implements
+### implements
 Declares a class definition to implement an interface.
 
 When a class implements an interface, it must define all abstract attributes
@@ -589,7 +589,7 @@ will be raised. Let's try that again.
 'red'
 ```
 
-#### instanceof
+### instanceof
 Determines whether an instance's class implements an interface.
 
 ```
