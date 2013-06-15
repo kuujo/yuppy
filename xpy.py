@@ -455,15 +455,6 @@ def interface(cls):
       setattr(cls, key, attribute)
   return cls
 
-def extends(*bases):
-  """
-  Extends an interface.
-  """
-  def wrap(c):
-    c.__bases__ += bases
-    return c
-  return wrap
-
 def implements(interface):
   """
   Implements an interface.
