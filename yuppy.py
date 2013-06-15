@@ -30,7 +30,7 @@ class _Attribute(object):
   def __init__(self):
     self.__name__ = None
 
-class _PrivateAttribute(_Attribute):
+class PrivateAttribute(_Attribute):
   """
   A public placeholder for private attributes.
 
@@ -53,7 +53,7 @@ class _PrivateAttribute(_Attribute):
     if instance is not None:
       raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
-class _ProtectedAttribute(_Attribute):
+class ProtectedAttribute(_Attribute):
   """
   A public placeholder for private attributes.
 
@@ -412,6 +412,9 @@ def private(*args, **kwargs):
     return PrivateVariable(*args, **kwargs)
 
 def static(*args, **kwargs):
+  """
+  Creates a static attribute.
+  """
   if len(args) == 1 and len(kwargs) == 0:
     if isinstance(args[0], FunctionType):
       return PublicStaticMethod(args[0])
@@ -645,11 +648,11 @@ def encapsulate(cls):
   for key, value in cls.__dict__.items():
     try:
       if value.__visibility__ == 'private':
-        attribute = _PrivateAttribute()
+        attribute = PrivateAttribute()
         attribute.__name__ = key
         setattr(Object, key, attribute)
       elif value.__visibility__ == 'protected':
-        attribute = _ProtectedAttribute()
+        attribute = ProtectedAttribute()
         attribute.__name__ = key
         setattr(Object, key, attribute)
     except AttributeError:
