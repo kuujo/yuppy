@@ -14,9 +14,8 @@ comprimising usability.
 
 # Table of contents
 -------------------
-1. [Overview](#butencapsulationisbad)
-   * [But Why?](#butencapsulationisbad)
-   * [A Complete Example](#acompleteexample)
+1. [Overview](#but-encapsulation-is-bad)
+1. [A Complete Example](#a-complete-example)
 1. [Encapsulation](#thexpyapi)
    * [Class Variables](#variable)
    * [Class Constants](#constant)
@@ -26,7 +25,7 @@ comprimising usability.
    * [Private Members](#private)
    * [Static Members](#static)
    * [Final Classes](#final)
-   * [Type Validation](#typevalidation)
+   * [Type Validation](#type-validation)
 1. [Interfaces](#interfaces)
    * [Interface](#interface)
    * [Implements](#implements)
@@ -309,9 +308,6 @@ class Apple(object):
 
 ### protected
 Creates a protected attribute.
-
-_Note that protected member variables are not currently reliable. Thus
-the `protected` decorator should only be used for methods._
 
 Protected members are variables that can be accessed only from within a
 class or a sub-class of the declaring class. Thus, while protected
