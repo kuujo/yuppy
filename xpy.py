@@ -453,6 +453,10 @@ def interface(cls):
       attribute = _AbstractAttribute()
       attribute.__name__ = key
       setattr(cls, key, attribute)
+
+  def classnew(cls, *args, **kwargs):
+    raise TypeError("Cannot instantiate interface '%s'." % (cls.__name__,))
+  cls.__new__ = classmethod(classnew)
   return cls
 
 def implements(interface):
