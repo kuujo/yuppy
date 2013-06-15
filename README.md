@@ -10,16 +10,19 @@ Python applications. It intends to provide fully integrated support for
 interfaces, encapsulation and built-in member validation - features that
 are commonly found in other object-oriented languages - in a manner that
 preserves much of the dynamic nature of Python. While this library should
-certainly not always be used when developing with Python, it can certainly
-improve the integrity of your data and the stability of your code without
+certainly not always be used when developing with Python, it can improve
+the integrity of your data and the stability of your code without
 comprimising usability.
 
 _I have heard and understand the arguments against encapsulation in Python.
-Besides, true encapsulation is obviously impossible. But I do believe
-there is a time and a place for this, and I learned a lot about the
+Virtually all Python variables are public in some sense. But I do believe
+there is a time and a place for these features, and I learned a lot about the
 language in writing this library. Yuppy should be used responsibly,
-meaning most features should not be used in libraries with any significant
-user base._
+meaning some features should not be used in libraries with a significant
+user base. That said, many Yuppy features - such as duck-typing based
+interfaces, constant attributes, and abstract and final classes - can be
+very useful within the context of a dynamic language. Be mindful of your
+users and of the language when using Yuppy._
 
 ### Table of contents
 -------------------
@@ -61,10 +64,6 @@ time, it can be hard to tell where that bad port number came from. Yuppy
 can automatically type check class or instance variables _at the point
 at which they are set_ to ensure that your data is not corrupted.
 
-_Note that Yuppy is not currently considered feature complete. Support for
-abstract classes and members as well as improved protected and private
-member access restrictions is currently planned. Pull requests are welcome!_
-
 ### A Complete Example
 Yuppy is easy to use, implementing common object-oriented programming
 features in a manner that is consistent with implementations in other
@@ -73,9 +72,9 @@ languages, making for more clear, concise, and reliable code.
 With Yuppy, you do not have to extend a special base class. Simply use
 the `encapsulate` decorator on any class. Internally, Yuppy wraps the class,
 returning a child of the class that protects internal class members.
-Sure, there's always a way around everything in Python, but Yuppy goes to
-a long way towards protecting internall object data, and circumventing
-the Yuppy API would be more work that it's worth.
+Sure, there's a way around everything in Python, but Yuppy goes to
+a long way towards protecting internal object data, and circumventing
+the Yuppy API would be more work than it's worth.
 
 ```python
 # When importing yuppy.*, the following decorators will be imported:
@@ -87,6 +86,7 @@ from yuppy import *
 @encapsulate
 class Apple(object):
   """An abstract apple."""
+  # Instance attributes can be automatically validated.
   weight = private(type=float)
 
   def __init__(self, weight):
@@ -124,6 +124,7 @@ class GreenApple(Apple):
   def get_color(self):
     return self.color
 
+# Interface definitions are simply classes that implement normal methods.
 @interface
 class AppleTreeInterface(object):
   """An apple tree interface."""
@@ -133,6 +134,11 @@ class AppleTreeInterface(object):
   def count_apples(self):
     """Returns the number of apples on the tree."""
 
+# Interface implementations can be validated using either duck-typing
+# or strict implementation-based validation. In this case we actually
+# implement the interface, but even without implementing the interface,
+# this class would pass validation via yuppy.instanceof based on the
+# fact that it contains the required interface methods.
 @encapsulate
 @implements(AppleTreeInterface)
 class AppleTree(object):
@@ -613,6 +619,12 @@ is provided.
 >>> apple = Apple('one')
 AttributeError: Invalid attribute value for 'weight'.
 ```
+
+Note also that instance variable type checking is integrated with the
+Yuppy interface system. This means that an interface can be passed to
+any variable definition as the `type` argument, and Yuppy will validate
+variable values based on duck typing. This can be very useful within the
+context of the Python programming language.
 
 ## Interfaces
 Interfaces are a partcilarly useful feature with Python. Since Python
