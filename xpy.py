@@ -44,9 +44,10 @@ class _PrivateAttribute(_Attribute):
     """Raises an attribute error."""
     raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
-  def __det__(self, instance):
+  def __del__(self, instance=None):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    if instance is not None:
+      raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
 class _ProtectedAttribute(_Attribute):
   """
@@ -66,9 +67,10 @@ class _ProtectedAttribute(_Attribute):
     """Raises an attribute error."""
     raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
-  def __det__(self, instance):
+  def __del__(self, instance=None):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    if instance is not None:
+      raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
 
 class _Constant(_Attribute):
   """
@@ -442,6 +444,40 @@ def final(cls):
   constructor.__name__ = cls.__name__
   return constructor
 
+def interface(cls):
+  """
+  Creates an interface.
+  """
+  for key, value in cls.__dict__.items():
+    if not (key.startswith('__') and key.endswith('__')):
+      attribute = _AbstractAttribute()
+      attribute.__name__ = key
+      setattr(cls, key, attribute)
+  return cls
+
+def extends(*bases):
+  """
+  Extends an interface.
+  """
+  def wrap(c):
+    c.__bases__ += bases
+    return c
+  return wrap
+
+def implements(interface):
+  """
+  Implements an interface.
+  """
+  def wrap(cls):
+    for key, value in interface.__dict__.items():
+      if isinstance(value, _AbstractAttribute):
+        try:
+          cls.__dict__[key]
+        except KeyError:
+          raise TypeError("'%s' definition missing attribute '%s' from '%s' interface." % (cls.__name__, key, interface.__name__))
+    return cls
+  return wrap
+
 def encapsulate(cls):
   """
   Encapsulates a class.
@@ -549,10 +585,31 @@ def encapsulate(cls):
   for key, value in cls.__dict__.items():
     try:
       if value.__visibility__ == 'private':
-        setattr(Encapsulator, key, _PrivateAttribute())
+        attribute = _PrivateAttribute()
+        attribute.__name__ = key
+        setattr(Encapsulator, key, attribute)
       elif value.__visibility__ == 'protected':
-        setattr(Encapsulator, key, _ProtectedAttribute())
+        attribute = _ProtectedAttribute()
+        attribute.__name__ = key
+        setattr(Encapsulator, key, attribute)
     except AttributeError:
       continue
 
   return Encapsulator
+
+class _AbstractAttribute(_Attribute):
+  """An abstract attribute."""
+  __visibility__ = 'abstract'
+
+  def __get__(self, instance, owner=None):
+    """Raises an attribute error."""
+    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """Raises an attribute error."""
+    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
+  def __del__(self, instance):
+    """Raises an attribute error."""
+    if instance is not None:
+      raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
