@@ -1,7 +1,7 @@
 # Copyright (c) 2013 Jordan Halterman
 # See LICENSE for details.
 from types import FunctionType
-import inspect
+import inspect, copy
 
 __all__ = [
   'encapsulate',
@@ -514,6 +514,20 @@ def encapsulate(cls):
   if not inspect.isclass(cls):
     raise TypeError("Only classes may be encapsulated.")
 
+  # If any parents of this class have already been decorated, dynamically
+  # remove the decoration.
+  cls = copy.copy(cls)
+  current = cls
+  while True:
+    try:
+      if current.__bases__[0].__name__ == 'Encapsulator':
+        current.__bases__ = current.__bases__[0].__bases__
+    except IndexError:
+      break
+    else:
+      current = current.__bases__[0]
+
+  # Apply variable names to definitions.
   def apply_names(attrs):
     for key, value in attrs.items():
       if isinstance(value, _Attribute):
@@ -521,16 +535,55 @@ def encapsulate(cls):
 
   apply_names(cls.__dict__)
 
-  currentcls = cls
-  currentbase = currentcls.__bases__[0].__bases__
-  while True:
+  def get_definition(self, name):
+    def find_definition(cls):
+      for base in cls.__bases__:
+        try:
+          return base.__dict__[name]
+        except KeyError:
+          return find_definition(base)
+        except AttributeError:
+          return None
+      return None
+
     try:
-      if currentbase[0].__name__ == 'Encapsulator':
-        currentcls.__bases__ = (currentbase[0].__bases__[0],)
-      currentcls = currentbase[0].__bases__[0]
-      currentbase = currentcls.__bases__
-    except IndexError:
-      break
+      return self.__dict__[name]
+    except KeyError:
+      try:
+        return cls.__dict__[name]
+      except KeyError:
+        definition = find_definition(cls)
+        if definition is None:
+          raise AttributeError("'%s' object has no attribute '%s'." % (cls, name))
+        else:
+          return definition
+
+  def get_visibility(self, name):
+    definition = get_definition(self, name)
+    try:
+      return definition.__visibility__
+    except AttributeError:
+      return 'public'
+
+  def is_child(self, _cls):
+    def find_root(_cls):
+      for base in _cls.__bases__:
+        if base is Encapsulator:
+          return find_root(base)
+      return _cls
+    return cls in find_root(_cls).__bases__
+
+  def call(self, callback, attr, *args):
+    visibility = get_visibility(self, attr)
+    if visibility == 'public':
+      return callback(self.__private__, attr, *args)
+    elif visibility == 'protected':
+      if self.__class__ is not Encapsulator and is_child(self, self.__class__):
+        return callback(self.__private__, attr, *args)
+      else:
+        raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
+    else:
+      raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
 
   class Encapsulator(cls):
     """
@@ -538,71 +591,24 @@ def encapsulate(cls):
     """
     def __init__(self, *args, **kwargs):
       self.__dict__['__private__'] = cls(*args, **kwargs)
+      super(Encapsulator, self).__init__(*args, **kwargs)
 
-    def __get_definition(self, name):
+    def __getattribute__(self, name):
       """
-      Returns an attribute definition.
+      Supports accessing all attributes.
+
+      If an attribute begins and ends with two underscores, it is not processed for
+      accessibility. All other members are checked for accessibility.
       """
-      def find_definition(cls):
-        for base in cls.__bases__:
-          try:
-            return base.__dict__[name]
-          except KeyError:
-            return find_definition(base)
-          except AttributeError:
-            return None
-        return None
-
-      try:
-        return self.__dict__[name]
-      except KeyError:
-        try:
-          return cls.__dict__[name]
-        except KeyError:
-          definition = find_definition(cls)
-          if definition is None:
-            raise AttributeError("'%s' object has no attribute '%s'." % (cls, name))
-          else:
-            return definition
-
-    def __get_visibility(self, name):
-      """
-      Returns the visibility of an attribute by name.
-      """
-      definition = self.__get_definition(name)
-      try:
-        return definition.__visibility__
-      except AttributeError:
-        return 'public'
-
-    def __is_child(self, _cls):
-      def find_root(_cls):
-        for base in _cls.__bases__:
-          if base is Encapsulator:
-            return find_root(base)
-        return _cls
-      return cls in find_root(_cls).__bases__
-
-    def __call(self, callback, attr, *args):
-      visibility = self.__get_visibility(attr)
-      if visibility == 'public':
-        return callback(self.__private__, attr, *args)
-      elif visibility == 'protected':
-        if self.__class__ is not Encapsulator and self.__is_child(self.__class__):
-          return callback(self.__private__, attr, *args)
-        else:
-          raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
-      else:
-        raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
-
-    def __getattr__(self, name):
-      return self.__call(getattr, name)
+      if name.startswith('__') and name.endswith('__'):
+        return cls.__getattribute__(self, name)
+      return call(self, cls.__getattribute__, name)
 
     def __setattr__(self, name, value):
-      return self.__call(setattr, name, value)
+      return call(self, setattr, name, value)
 
     def __delattr__(self, name):
-      return self.__call(delattr, name)
+      return call(self, delattr, name)
 
     def __repr__(self):
       return repr(self.__private__)

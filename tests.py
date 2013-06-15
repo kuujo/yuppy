@@ -1,7 +1,8 @@
 import unittest
 from yuppy import *
 
-class Constant(Object):
+@encapsulate
+class Constant(object):
   foo = const('bar')
 
 class ConstantTestCase(unittest.TestCase):
@@ -9,12 +10,19 @@ class ConstantTestCase(unittest.TestCase):
   Constant test case.
   """
   def test_constant(self):
-    Constant.foo
-    def setfoo(value):
-      Constant.foo = value
-    self.assertRaises(AttributeError, setfoo, 'baz')
+    def setfoo(obj, value):
+      obj.foo = value
+    instance = Constant()
+    self.assertRaises(AttributeError, setfoo, instance, 'baz')
+    self.assertEquals(instance.foo, 'bar')
+    # Ensure that even after changing the class constant, the object
+    # constant does not change.
+    Constant.foo = 'baz'
+    instance = Constant()
+    self.assertEquals(instance.foo, 'bar')
 
-class PublicVariable(Object):
+@encapsulate
+class PublicVariable(object):
   foo = public(default=2, type=int, validate=lambda x: x == 1)
 
 class PublicVariableTestCase(unittest.TestCase):
@@ -30,7 +38,8 @@ class PublicVariableTestCase(unittest.TestCase):
     self.assertRaises(AttributeError, setfoo, 2)
     setfoo(1)
 
-class PublicMethod(Object):
+@encapsulate
+class PublicMethod(object):
   @public
   def foo(self):
     return 'bar'
@@ -43,7 +52,8 @@ class PublicMethodTestCase(unittest.TestCase):
     instance = PublicMethod()
     self.assertEquals(instance.foo(), 'bar')
 
-class PublicStaticVariable(Object):
+@encapsulate
+class PublicStaticVariable(object):
   foo = static(public(type=int, validate=lambda x: x == 1))
 
 class PublicStaticVariableTestCase(unittest.TestCase):
@@ -61,7 +71,8 @@ class PublicStaticVariableTestCase(unittest.TestCase):
     instance2 = PublicStaticVariable()
     self.assertEquals(instance2.foo, 1)
 
-class PublicStaticMethod(Object):
+@encapsulate
+class PublicStaticMethod(object):
   @static
   @public
   def foo(self):
@@ -75,14 +86,19 @@ class PublicStaticMethodTestCase(unittest.TestCase):
     instance = PublicStaticMethod()
     self.assertEquals(instance.foo(), instance.__private__.__class__)
 
-class ProtectedVariable(Object):
+@encapsulate
+class ProtectedVariable(object):
   foo = protected(type=int, validate=lambda x: x == 1)
+  @public
   def setfoo(self, value):
     self.foo = value
+  @public
   def getfoo(self):
     return self.foo
 
+@encapsulate
 class ExtendedVariable(ProtectedVariable):
+  @public
   def extfoo(self):
     return self.foo
 
@@ -109,14 +125,17 @@ class ProtectedVariableTestCase(unittest.TestCase):
     self.assertRaises(AttributeError, setfoo, 'foo')
     instance2.extfoo() # This fails!
 
-class ProtectedMethod(Object):
+@encapsulate
+class ProtectedMethod(object):
   @protected
   def foo(self):
     return 'bar'
   def getfoo(self):
     return self.foo()
 
+@encapsulate
 class ExtendedMethod(ProtectedMethod):
+  @public
   def extfoo(self):
     return self.foo()
 
@@ -125,11 +144,12 @@ class ProtectedMethodTestCase(unittest.TestCase):
   Protected method test case.
   """
   def test_protected_method(self):
-    instance = ProtectedMethod()
+    instance = ExtendedMethod()
     def getfoo():
       instance.foo
     self.assertRaises(AttributeError, getfoo)
     instance.getfoo()
+    instance.extfoo()
 
 class ProtectedStaticVariableTestCase(unittest.TestCase):
   """
@@ -146,7 +166,8 @@ class ProtectedConstantTestCase(unittest.TestCase):
   Protected constant test case.
   """
 
-class PrivateVariable(Object):
+@encapsulate
+class PrivateVariable(object):
   foo = private(type=int, validate=lambda x: x == 1)
   def setfoo(self, value):
     self.foo = value
@@ -168,7 +189,8 @@ class PrivateVariableTestCase(unittest.TestCase):
     instance.setfoo(1)
     self.assertEquals(instance.getfoo(), 1)
 
-class PrivateMethod(Object):
+@encapsulate
+class PrivateMethod(object):
   @private
   def foo(self):
     return 'bar'
@@ -186,7 +208,8 @@ class PrivateMethodTestCase(unittest.TestCase):
     self.assertRaises(AttributeError, getfoo)
     instance.getfoo()
 
-class PrivateStaticVariable(Object):
+@encapsulate
+class PrivateStaticVariable(object):
   foo = static(private(type=int, validate=lambda x: x == 1))
 
 class PrivateStaticVariableTestCase(unittest.TestCase):
@@ -201,7 +224,8 @@ class PrivateStaticVariableTestCase(unittest.TestCase):
     self.assertRaises(AttributeError, setfoo, 'foo')
     self.assertRaises(AttributeError, setfoo, 2)
 
-class PrivateStaticMethod(Object):
+@encapsulate
+class PrivateStaticMethod(object):
   @static
   @private
   def foo(self):
