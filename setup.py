@@ -1,17 +1,17 @@
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 from setuptools import setup
 
 if __name__ == '__main__':
   setup(
-    name='Extreme Python',
-    description='Takes Python programming to the extreme!',
+    name='Yuppy',
+    description='Python interfaces and data encapsulation.',
     author='Jordan Halterman',
     version=__version__,
     author_email='jordan.halterman@gmail.com',
-    url='https://github.com/jordanhalterman/extreme-python',
-    keywords=['extreme', 'oop'],
-    py_modules=['xpy'],
+    url='https://github.com/jordanhalterman/yuppy',
+    keywords=['yuppy', 'oop', 'interfaces', 'encapsulation'],
+    py_modules=['yuppy'],
     classifiers=[
       'Development Status :: 3 - Alpha',
       'Environment :: Console',

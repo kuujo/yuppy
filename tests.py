@@ -1,5 +1,5 @@
 import unittest
-from xpy import *
+from yuppy import *
 
 class Constant(Object):
   foo = const('bar')

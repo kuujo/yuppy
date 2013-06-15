@@ -1,11 +1,13 @@
-Extreme Python
---------------
+Yuppy
+-----
 
-_XPy is released under the [MIT License](http://opensource.org/licenses/MIT)._
+#### Python Programming for the Privileged Class
+
+_Yuppy is released under the [MIT License](http://opensource.org/licenses/MIT)._
 
 Extreme Python is a small library that integrates seamlessly with Python
 to promote data integrity through some essential principles of object-oriented
-programming. XPy adds authentic Python support for interfaces, encapsulation
+programming. Yuppy adds authentic Python support for interfaces, encapsulation
 and built-in member validation - features that are commonly found in other
 object-oriented languages. While this library should certainly not always
 be used when developing with Python, it can certainly improve the
@@ -34,8 +36,8 @@ comprimising usability.
 ##### _"But encapsulation is bad!"_
 But options are good. Sure, Python is a dynamic language, and often its
 flexibility can be used to creatively conquer complex problems (indeed,
-XPy was developed using many of these features). But lax access
-restrictions are not _always_ beneficial. XPy can help protect the
+Yuppy was developed using many of these features). But lax access
+restrictions are not _always_ beneficial. Yuppy can help protect the
 integrity of your data by preventing important internal instance data
 from being changed.
 
@@ -45,30 +47,31 @@ But without the proper precautions a lack of type checking can ultimately
 lead to unpredictable code. What if some code somewhere is changing your
 FTP class's `port` attribute to an invalid string? You won't find out
 about it until your code tries to connect to the FTP server. By that
-time, it can be hard to tell where that bad port number came from. XPy
+time, it can be hard to tell where that bad port number came from. Yuppy
 can automatically type check class or instance variables _at the point
 at which they are set_ to ensure that your data is not corrupted.
 
-_Note that XPy is not currently considered feature complete. Support for
+_Note that Yuppy is not currently considered feature complete. Support for
 abstract classes and members as well as improved protected and private
 member access restrictions is currently planned. Pull requests are welcome!_
 
 ### A Complete Example
-XPy is easy to use, implementing common object-oriented programming
+Yuppy is easy to use, implementing common object-oriented programming
 features in a manner that is consistent with implementations in other
 languages, making for more clear, concise, and reliable code.
 
-With XPy, you do not have to extend a special base class. Simply use
-the `encapsulate` decorator on any class. Internally, XPy wraps the class,
+With Yuppy, you do not have to extend a special base class. Simply use
+the `encapsulate` decorator on any class. Internally, Yuppy wraps the class,
 returning a child of the class that protects internal class members.
-Sure, there's always a way around everything in Python, but XPy goes to
+Sure, there's always a way around everything in Python, but Yuppy goes to
 a long way towards protecting internall object data, and circumventing
-the XPy API would be more work that it's worth.
+the Yuppy API would be more work that it's worth.
 
 ```python
-# When importing xpy.*, the following decorators will be imported:
-# encapsulate, variable/var, constant/const, method, public, protected, private, and static.
-from xpy import *
+# When importing yuppy.*, the following decorators will be imported:
+# encapsulate, variable/var, constant/const, method, public, protected,
+# private, static, final, interface, implements, and instanceof.
+from yuppy import *
 
 # Use the 'encapsulate' decorator to decorate the class.
 @encapsulate
@@ -198,22 +201,22 @@ GreenApple(1.0)
 
 ## Interfaces
 Interfaces are a partcilarly useful feature with Python. Since Python
-promotes duck typing, XPy interfaces can be used to ensure that any
-object walks and talks like a duck. For this reason, XPy interface
+promotes duck typing, Yuppy interfaces can be used to ensure that any
+object walks and talks like a duck. For this reason, Yuppy interface
 evaluation supports both explicit interface implementation checks _and_
 implicit interface implementation checks, or duck typing.
 
 ### interface
 Declares a class definition to be an interface.
 
-Abstract interface attributes are declared by simply creating them. XPy
+Abstract interface attributes are declared by simply creating them. Yuppy
 will evaluate the interface for any public attributes and consider those
 to be required of any implementing classes.
 
 ##### Example
 
 ```python
-from xpy import *
+from yuppy import *
 
 @interface
 class AppleInterface(object):
@@ -229,7 +232,7 @@ class AppleInterface(object):
 Declares a class definition to implement an interface.
 
 When a class implements an interface, it must define all abstract attributes
-of that interface. XPy will automatically evaluate the class definition
+of that interface. Yuppy will automatically evaluate the class definition
 to ensure it conforms to the indicated interface.
 
 ##### Example
@@ -274,14 +277,14 @@ implements(instance, interface[, ducktype=True])
 
 Finally, it's important that we be able to evaluate objects for adherence
 to any interface requirements. The `instanceof` function behaves similarly
-to Python's built-in `isinstance` function, but for XPy interfaces.
-However, _XPy's implementation can also evaluate interface implementation
+to Python's built-in `isinstance` function, but for Yuppy interfaces.
+However, _Yuppy's implementation can also evaluate interface implementation
 based on duck typing._ This means that object classes do not necessarily
 have to implement a specific interface, they simply need to behave in the
 manner that the interface requires.
 
 ```
->>> from xpy import instanceof
+>>> from yuppy import instanceof
 >>> apple = Apple()
 >>> instanceof(apple, AppleInterface)
 True
@@ -302,7 +305,7 @@ var([default=None[, type=None[, validate=None]]])
 
 ##### Example
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class Apple(object):
@@ -318,7 +321,7 @@ Creates a public constant attribute.
 
 Constants are attributes which have a permanent value. They can be used for
 any value which should never change within the application, such as an
-application port number, for instance. With XPy we can use the `const`
+application port number, for instance. With Yuppy we can use the `const`
 decorator to create a constant, passing a single permanent value to the
 constructor.
 ```
@@ -328,7 +331,7 @@ const(value)
 
 ##### Example
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class RedApple(object):
@@ -350,7 +353,7 @@ method(callback)
 
 ##### Example
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class Apple(object):
@@ -370,8 +373,8 @@ class Apple(object):
 ### public
 Creates a public attribute.
 
-All class members are naturally public in Python. Therefore, XPy's `public` decorator
-is generally used simply for readability.
+All class members are naturally public in Python. Therefore, Yuppy's
+`public` decorator is generally used simply for readability.
 
 Note that if an attribute (`var`, `const`, or `method`) is not passed as the
 first argument, this decorator will create a public `method` if the argument
@@ -382,7 +385,7 @@ public([value=None[, default=None[, type=None[, validate=None]]]])
 
 ##### Example
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class Apple(object):
@@ -402,7 +405,7 @@ Creates a protected attribute.
 Protected members are variables that can be accessed only from within a
 class or a sub-class of the declaring class. Thus, while protected
 members have more relaxed access restriction, values are still hidden
-from outside users. With XPy we can use the `protected` decorator to
+from outside users. With Yuppy we can use the `protected` decorator to
 declare any class member protected.
 
 Note that if an attribute (`var`, `const`, or `method`) is not passed as
@@ -415,7 +418,7 @@ protected([value=None[, default=None[, type=None[, validate=None]]]])
 ##### Example
 
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class Apple(object):
@@ -456,8 +459,8 @@ Creates a private attribute.
 
 Private members are variables that can only be accessed from within a class.
 They support data integrity by preventing class users from altering internal attribute.
-With XPy we can decorate any class member with `private` to hide it from outside access.
-Note that XPy variables must be defined within the class definition, not
+With Yuppy we can decorate any class member with `private` to hide it from outside access.
+Note that Yuppy variables must be defined within the class definition, not
 arbitrarily defined within class code. This is common in other object-oriented
 languages as well.
 
@@ -471,7 +474,7 @@ private([value=None[, default=None[, type=None[, validate=None]]]])
 ##### Example
 
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class Apple(object):
@@ -506,9 +509,9 @@ AttributeError: Cannot access private Apple object member '_get_weight'.
 ### static
 Creates a static attribute.
 
-Static XPy members are equivalent to standard Python class members. This is
+Static Yuppy members are equivalent to standard Python class members. This is
 essentially the same parallel that exists between Python's class members
-and static variables in many other object-oriented languages. With XPy we
+and static variables in many other object-oriented languages. With Yuppy we
 can use the `static` decorator to create static methods or properties. Note
 that `static` members can be further decorated with `public`, `private`,
 or `protected`.
@@ -523,7 +526,7 @@ static([value=None[, default=None[, type=None[, validate=None]]]])
 ##### Example
 
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class Apple(object):
@@ -550,7 +553,7 @@ None
 ### final
 Declares a class definition to be final.
 
-The final XPy decorator is, well, `final`, which allows users to define
+The final Yuppy decorator is, well, `final`, which allows users to define
 classes that _cannot be extended._ This is a common feature in several
 other object-oriented languages.
 ```
@@ -560,7 +563,7 @@ final(cls)
 ##### Example
 
 ```python
-from xpy import *
+from yuppy import *
 
 @final
 class Apple(object):
@@ -576,8 +579,8 @@ TypeError: ...
 ```
 
 ### Type Validation
-XPy can perform direct type checking and arbitrary execution of validation
-callbacks. When a mutable XPy attribute is set, validators will automatically
+Yuppy can perform direct type checking and arbitrary execution of validation
+callbacks. When a mutable Yuppy attribute is set, validators will automatically
 be executed. This ensures that values are validated at the time they're
 set rather than when they're accessed.
 
@@ -588,7 +591,7 @@ constructor.
 ##### Example
 
 ```python
-from xpy import *
+from yuppy import *
 
 @encapsulate
 class Apple(object):
