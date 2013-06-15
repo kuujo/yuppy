@@ -5,8 +5,8 @@ _XPy is released under the [MIT License](http://opensource.org/licenses/MIT)._
 
 Extreme Python is a small library that integrates seamlessly with Python
 to promote data integrity through some essential principles of object-oriented
-programming. XPy adds authentic Python support for encapsulation and
-built-in member validation - features that are commonly found in other
+programming. XPy adds authentic Python support for interfaces, encapsulation
+and built-in member validation - features that are commonly found in other
 object-oriented languages. While this library should certainly not always
 be used when developing with Python, it can certainly improve the
 integrity of your data and the stability of your code without

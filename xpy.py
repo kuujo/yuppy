@@ -470,8 +470,33 @@ def implements(interface):
           cls.__dict__[key]
         except KeyError:
           raise TypeError("'%s' definition missing attribute '%s' from '%s' interface." % (cls.__name__, key, interface.__name__))
+    try:
+      cls.__interfaces__
+    except AttributeError:
+      cls.__interfaces__ = set()
+    cls.__interfaces__.add(interface)
     return cls
   return wrap
+
+def instanceof(instance, interface, ducktype=True):
+  """
+  Type checks an instance for an interface.
+  """
+  if isinstance(instance, interface):
+    return True
+  if ducktype:
+    for key, value in interface.__dict__.items():
+      if isinstance(value, _AbstractAttribute):
+        try:
+          instance.__class__.__dict__[key]
+        except KeyError:
+          return False
+    return True
+  else:
+    try:
+      return interface in instance.__class__.__interfaces__
+    except AttributeError:
+      return False
 
 def encapsulate(cls):
   """
