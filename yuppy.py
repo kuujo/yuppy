@@ -1,7 +1,7 @@
 # Copyright (c) 2013 Jordan Halterman
 # See LICENSE for details.
-from types import FunctionType, MethodType
-import copy, inspect
+from types import FunctionType
+import inspect
 
 __all__ = [
   'encapsulate',
