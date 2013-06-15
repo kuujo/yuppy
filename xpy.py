@@ -4,8 +4,7 @@ from types import FunctionType, MethodType
 import copy, inspect
 
 __all__ = [
-  'Object',
-  'final',
+  'encapsulate',
   'variable',
   'var',
   'constant',
@@ -15,6 +14,7 @@ __all__ = [
   'protected',
   'private',
   'static',
+  'final',
 ]
 
 class _Attribute(object):
@@ -34,6 +34,8 @@ class _PrivateAttribute(_Attribute):
   attribute is private. If the attribute is accessed in any way, an
   AttributeError will be raised.
   """
+  __visibility__ = 'private'
+
   def __get__(self, instance, owner=None):
     """Raises an attribute error."""
     raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
@@ -54,6 +56,8 @@ class _ProtectedAttribute(_Attribute):
   attribute is protected. If the attribute is accessed in any way, an
   AttributeError will be raised.
   """
+  __visibility__ = 'protected'
+
   def __get__(self, instance, owner=None):
     """Raises an attribute error."""
     raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
@@ -247,7 +251,9 @@ class _Method(_Attribute):
 
   def __get__(self, instance, owner=None):
     """Gets the method object."""
-    return self.__method__
+    def instancemethod(*args, **kwargs):
+      return self.__method__(instance, *args, **kwargs)
+    return instancemethod
 
 class PublicMethod(_Method):
   """
@@ -271,6 +277,11 @@ class _StaticMethod(_Method):
   """
   A abstract static method attribute.
   """
+  def __get__(self, instance, owner=None):
+    """Gets the method object."""
+    def staticmethod(*args, **kwargs):
+      return self.__method__(instance.__class__, *args, **kwargs)
+    return staticmethod
 
 class PublicStaticMethod(_StaticMethod):
   """
@@ -289,115 +300,6 @@ class PrivateStaticMethod(_StaticMethod):
   A private static method.
   """
   __visibility__ = 'private'
-
-class ObjectClass(object):
-  """
-  An Extreme Python object metaclass.
-  """
-  def __init__(self, name, bases=(), attrs=None, __doc__=None, __module__=None):
-    attrs, publicattrs = attrs or {}, {}
-
-    # Copy the full attributes dictionary into the current instance.
-    self.__attrs = copy.copy(attrs)
-
-    # Check all parent instances for inherited attributes. Note that
-    # attributes may only be inherited if they're public or protected.
-    for cls in bases:
-      for attrname, attr in cls.__attrs.items():
-        if attrname not in attrs:
-          try:
-            if attr.__visibility__ in ('public', 'protected'):
-              attrs[attrname] = attr
-          except AttributeError:
-            attrs[attrname] = attr
-
-    # Now iterate over all current class members.
-    for attrname, attr in attrs.items():
-      if isinstance(attr, _Attribute):
-        attr.__name__ = attrname
-
-      # Determine the attribute visibility by the __visibility__ attribute.
-      try:
-        visibility = attr.__visibility__
-      except AttributeError:
-        visibility = 'public'
-
-      # If this is a method then wrap it. Otherwise, create an accessor.
-      if isinstance(attr, _Constant):
-        setattr(self, attrname, attr)
-        setattr(self.__class__, attrname, attr)
-      elif isinstance(attr, _StaticMethod):
-        attrs[attrname] = attr.__method__
-        attr = self._get_static_method_wrapper(attr.__method__)
-      elif isinstance(attr, _Method):
-        attrs[attrname] = attr.__method__
-        attr = self._get_instance_method_wrapper(attr.__method__)
-      elif isinstance(attr, FunctionType):
-        attr = self._get_instance_method_wrapper(attr)
-      else:
-        attr = self._get_attribute_wrapper(attrname)
-
-      # If the attribute's visibility is public, add it to the public
-      # attributes. Otherwise, the private instance contains *all* attributes.
-      if visibility == 'public':
-        publicattrs[attrname] = attr
-      else:
-        if visibility == 'protected':
-          publicattrs[attrname] = _ProtectedAttribute()
-        else:
-          publicattrs[attrname] = _PrivateAttribute()
-        publicattrs[attrname].__name__ = attrname
-
-    # If the instance does not have an __init__ method then create a
-    # placeholder __init__ method.
-    if not attrs.has_key('__init__'):
-      attrs['__init__'] = lambda self, *args, **kwargs: None
-    publicattrs['__init__'] = self._get_init_wrapper(attrs['__init__'])
-
-    # Create an internal and external instance. The internal instance
-    # contains all attributes in the object, while the external instance
-    # contains only those attributes that are public.
-    self.__cprivate__ = type(name, (object,), attrs)
-    self.__cpublic__ = type(name, (object,), publicattrs)
-
-  def __repr__(self):
-    return self.__cprivate__.__name__
-
-  def __call__(self, *args, **kwargs):
-    return self.__cpublic__(self.__cprivate__(*args, **kwargs), *args, **kwargs)
-
-  def _get_init_wrapper(self, init):
-    """Returns an instance __init__ method wrapper."""
-    def wrapped(instance, *args, **kwargs):
-      private = args[0]
-      instance.__private__ = private
-      args = args[1:]
-      init(private, *args, **kwargs)
-    return wrapped
-
-  def _get_instance_method_wrapper(self, method):
-    """Returns an instance method wrapper."""
-    def wrapped(instance, *args, **kwargs):
-      return method(instance.__private__, *args, **kwargs)
-    return wrapped
-
-  def _get_static_method_wrapper(self, method):
-    """Returns a class method wrapper."""
-    def wrapped(instance, *args, **kwargs):
-      return method(instance.__private__.__class__, *args, **kwargs)
-    return wrapped
-
-  def _get_attribute_wrapper(self, attrname):
-    """Returns an attribute wrapper."""
-    def getter(instance):
-      return getattr(instance.__private__, attrname)
-    def setter(instance, val):
-      setattr(instance.__private__, attrname, val)
-    def deleter(instance):
-      delattr(instance.__private__, attrname)
-    return property(getter, setter, deleter)
-
-Object = ObjectClass('Object')
 
 def variable(*args, **kwargs):
   """
@@ -531,8 +433,126 @@ def final(cls):
   """
   Prevents a class definition from being extended.
   """
-  if inspect.isclass(cls):
-    def create_class(*args, **kwargs):
-      return cls(*args, **kwargs)
-    return create_class
-  raise TypeError("The 'final' decorator only supports classes.")
+  if not inspect.isclass(cls):
+    raise TypeError("The 'final' decorator only supports classes.")
+
+  cls = encapsulate(cls)
+  def constructor(*args, **kwargs):
+    return cls(*args, **kwargs)
+  constructor.__name__ = cls.__name__
+  return constructor
+
+def encapsulate(cls):
+  """
+  Encapsulates a class.
+  """
+  if not inspect.isclass(cls):
+    raise TypeError("Only classes may be encapsulated.")
+
+  def apply_names(attrs):
+    for key, value in attrs.items():
+      if isinstance(value, _Attribute):
+        value.__name__ = key
+
+  apply_names(cls.__dict__)
+
+  currentcls = cls
+  currentbase = currentcls.__bases__[0].__bases__
+  while True:
+    try:
+      if currentbase[0].__name__ == 'Encapsulator':
+        currentcls.__bases__ = (currentbase[0].__bases__[0],)
+      currentcls = currentbase[0].__bases__[0]
+      currentbase = currentcls.__bases__
+    except IndexError:
+      break
+
+  class Encapsulator(cls):
+    """
+    A class encapsulator.
+    """
+    def __init__(self, *args, **kwargs):
+      self.__dict__['__private__'] = cls(*args, **kwargs)
+
+    def __get_definition(self, name):
+      """
+      Returns an attribute definition.
+      """
+      def find_definition(cls):
+        for base in cls.__bases__:
+          try:
+            return base.__dict__[name]
+          except KeyError:
+            return find_definition(base)
+          except AttributeError:
+            return None
+        return None
+
+      try:
+        return self.__dict__[name]
+      except KeyError:
+        try:
+          return cls.__dict__[name]
+        except KeyError:
+          definition = find_definition(cls)
+          if definition is None:
+            raise AttributeError("'%s' object has no attribute '%s'." % (cls, name))
+          else:
+            return definition
+
+    def __get_visibility(self, name):
+      """
+      Returns the visibility of an attribute by name.
+      """
+      definition = self.__get_definition(name)
+      try:
+        return definition.__visibility__
+      except AttributeError:
+        return 'public'
+
+    def __is_child(self, _cls):
+      def find_root(_cls):
+        for base in _cls.__bases__:
+          if base is Encapsulator:
+            return find_root(base)
+        return _cls
+      return cls in find_root(_cls).__bases__
+
+    def __call(self, callback, attr, *args):
+      visibility = self.__get_visibility(attr)
+      if visibility == 'public':
+        return callback(self.__private__, attr, *args)
+      elif visibility == 'protected':
+        if self.__class__ is not Encapsulator and self.__is_child(self.__class__):
+          return callback(self.__private__, attr, *args)
+        else:
+          raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
+      else:
+        raise AttributeError("Cannot access %s '%s' member '%s'." % (visibility, cls.__name__, attr))
+
+    def __getattr__(self, name):
+      return self.__call(getattr, name)
+
+    def __setattr__(self, name, value):
+      return self.__call(setattr, name, value)
+
+    def __delattr__(self, name):
+      return self.__call(delattr, name)
+
+    def __repr__(self):
+      return repr(self.__private__)
+
+    def __str__(self):
+      return str(self.__private__)
+
+  # Apply private or protected attributes to the decorator.
+  for key, value in cls.__dict__.items():
+    try:
+      if value.__visibility__ == 'private':
+        setattr(Encapsulator, key, _PrivateAttribute())
+      elif value.__visibility__ == 'protected':
+        setattr(Encapsulator, key, _ProtectedAttribute())
+    except AttributeError:
+      continue
+
+  return Encapsulator
