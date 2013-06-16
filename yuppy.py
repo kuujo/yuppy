@@ -512,8 +512,12 @@ def instanceof(instance, interface, ducktype=True):
   """
   Type checks an instance for an interface.
   """
-  if isinstance(instance, interface):
-    return True
+  try:
+    if isinstance(instance, interface):
+      return True
+  except TypeError:
+    raise TypeError("instanceof() arg 2 must be a class or type.")
+
   if ducktype:
     for key, value in interface.__dict__.items():
       if isinstance(value, AbstractAttribute):
