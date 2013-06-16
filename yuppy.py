@@ -30,6 +30,23 @@ class _Attribute(object):
   def __init__(self):
     self.__name__ = None
 
+class AbstractAttribute(_Attribute):
+  """A public placeholder for abstract attributes."""
+  __visibility__ = 'abstract'
+
+  def __get__(self, instance, owner=None):
+    """Raises an attribute error."""
+    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """Raises an attribute error."""
+    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
+  def __del__(self, instance):
+    """Raises an attribute error."""
+    if instance is not None:
+      raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+
 class PrivateAttribute(_Attribute):
   """
   A public placeholder for private attributes.
@@ -462,7 +479,7 @@ def interface(cls):
   """
   for key, value in cls.__dict__.items():
     if not (key.startswith('__') and key.endswith('__')):
-      attribute = _AbstractAttribute()
+      attribute = AbstractAttribute()
       attribute.__name__ = key
       setattr(cls, key, attribute)
 
@@ -478,7 +495,7 @@ def implements(interface):
   """
   def wrap(cls):
     for key, value in interface.__dict__.items():
-      if isinstance(value, _AbstractAttribute):
+      if isinstance(value, AbstractAttribute):
         try:
           cls.__dict__[key]
         except KeyError:
@@ -499,7 +516,7 @@ def instanceof(instance, interface, ducktype=True):
     return True
   if ducktype:
     for key, value in interface.__dict__.items():
-      if isinstance(value, _AbstractAttribute):
+      if isinstance(value, AbstractAttribute):
         try:
           instance.__class__.__dict__[key]
         except KeyError:
@@ -659,20 +676,3 @@ def encapsulate(cls):
       continue
 
   return Object
-
-class _AbstractAttribute(_Attribute):
-  """An abstract attribute."""
-  __visibility__ = 'abstract'
-
-  def __get__(self, instance, owner=None):
-    """Raises an attribute error."""
-    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
-
-  def __set__(self, instance, value):
-    """Raises an attribute error."""
-    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
-
-  def __del__(self, instance):
-    """Raises an attribute error."""
-    if instance is not None:
-      raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
