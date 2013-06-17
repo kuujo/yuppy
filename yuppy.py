@@ -543,15 +543,20 @@ def abstract(cls):
   """
   Creates an abstract class.
   """
-  class Abstract(cls):
-    """
-    A class encapsulator.
-    """
-    def __init__(self, *args, **kwargs):
-      if type(self) is Abstract:
-        raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
-      super(Abstract, self).__init__(*args, **kwargs)
-  return Abstract
+  if inspect.isclass(cls):
+    class Abstract(cls):
+      """
+      A class encapsulator.
+      """
+      def __init__(self, *args, **kwargs):
+        if type(self) is Abstract:
+          raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
+        super(Abstract, self).__init__(*args, **kwargs)
+    return Abstract
+  else:
+    attribute = AbstractAttribute()
+    attribute.__name__ = cls.__name__
+    return attribute
 
 def encapsulate(cls):
   """

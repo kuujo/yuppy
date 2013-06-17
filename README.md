@@ -33,6 +33,7 @@ users and of the language when using Yuppy._
    * [Abstract Classes](#abstract)
    * [Final Classes](#final)
 1. [Member Decorators](#member-decorators)
+   * [Abstract Attributes](#abstract-2)
    * [Variable Attributes](#variable)
    * [Constant Attributes](#constant)
    * [Method Attributes](#method)
@@ -316,6 +317,56 @@ TypeError: ...
 ```
 
 ## Member Decorators
+
+### abstract
+Creates an abstract method.
+```
+abstract(method)
+```
+
+Abstract methods can be applied to *any* python class, even without
+declaring the class to be abstract. This means that if the method is
+not re-defined in a child class, an `AttributeError` will be raised if
+the abstract method is accessed. Therefore, it is strongly recommended
+that any class that contains abstract methods be declared abstract.
+
+##### Example
+```python
+from yuppy import *
+
+@abstract
+class Apple(object):
+  """An abstract apple."""
+  @abstract
+  def get_color(self):
+    """Gets the apple color."""
+```
+
+Once we've defined an abstract class, we can extend it and override the
+abstract methods.
+
+```
+>>> class GreenApple(object):
+...   def get_color(self):
+...     return 'green'
+...
+>>> apple = GreenApple()
+>>> apple.get_color()
+'green'
+```
+
+Note what happens if we try to use abstract methods or fail to override them.
+
+```
+>>> class GreenApple(object):
+...   pass
+...
+>>> # We can still instantiate green apples since the class isn't declared abstract.
+>>> apple = GreenApple()
+>>> # But we can't access the get_color() method.
+>>> apple.get_color()
+AttributeError: Cannot access abstract 'GreenApple' object member 'bar'.
+```
 
 ### variable
 Creates a public variable attribute.
