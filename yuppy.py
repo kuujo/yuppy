@@ -547,8 +547,10 @@ def abstract(cls):
     """
     A class encapsulator.
     """
+    __abstract__ = True
+
     def __init__(self, *args, **kwargs):
-      if type(self) is AbstractClass:
+      if type(self) is Abstract:
         raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
       super(Abstract, self).__init__(*args, **kwargs)
   return Abstract
