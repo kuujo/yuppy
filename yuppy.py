@@ -550,17 +550,7 @@ def abstract(cls):
     def __init__(self, *args, **kwargs):
       if type(self) is AbstractClass:
         raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
-      self.__dict__['__private__'] = cls(*args, **kwargs)
-
-    def __getattr__(self, name):
-      return getattr(self.__private__, name)
-
-    def __setattr__(self, name, value):
-      return setattr(self.__private__, name, value)
-
-    def __delattr__(self, name):
-      return delattr(self.__private__, name)
-
+      super(Abstract, self).__init__(*args, **kwargs)
   return Abstract
 
 def encapsulate(cls):
