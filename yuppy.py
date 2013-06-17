@@ -494,6 +494,8 @@ def implements(interface):
   Implements an interface.
   """
   def wrap(cls):
+    if cls.__name__ == 'Abstract':
+      return cls
     for key, value in interface.__dict__.items():
       if isinstance(value, AbstractAttribute):
         try:
