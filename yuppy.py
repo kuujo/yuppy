@@ -36,16 +36,16 @@ class AbstractAttribute(_Attribute):
 
   def __get__(self, instance, owner=None):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access abstract '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access abstract '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __del__(self, instance):
     """Raises an attribute error."""
     if instance is not None:
-      raise AttributeError("Cannot access abstract %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+      raise AttributeError("Cannot access abstract '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
 class PrivateAttribute(_Attribute):
   """
@@ -59,16 +59,16 @@ class PrivateAttribute(_Attribute):
 
   def __get__(self, instance, owner=None):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access private '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access private '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __del__(self, instance=None):
     """Raises an attribute error."""
     if instance is not None:
-      raise AttributeError("Cannot access private %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+      raise AttributeError("Cannot access private '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
 class ProtectedAttribute(_Attribute):
   """
@@ -82,16 +82,16 @@ class ProtectedAttribute(_Attribute):
 
   def __get__(self, instance, owner=None):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access protected '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Raises an attribute error."""
-    raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot access protected '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __del__(self, instance=None):
     """Raises an attribute error."""
     if instance is not None:
-      raise AttributeError("Cannot access protected %s object member '%s'." % (instance.__class__.__name__, self.__name__))
+      raise AttributeError("Cannot access protected '%s' object member '%s'." % (instance.__class__.__name__, self.__name__))
 
 class _Constant(_Attribute):
   """
@@ -106,12 +106,12 @@ class _Constant(_Attribute):
 
   def __set__(self, instance, value):
     """Prevents the constant from being changed."""
-    raise AttributeError("Cannot override %s object constant '%s'." % (instance.__class__.__name__, self.__name__))
+    raise AttributeError("Cannot override '%s' object constant '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __del__(self, instance=None):
     """Prevents the constant from being deleted."""
     if instance is not None:
-      raise AttributeError("Cannot override %s object constant '%s'." % (instance.__class__.__name__, self.__name__))
+      raise AttributeError("Cannot override '%s' object constant '%s'." % (instance.__class__.__name__, self.__name__))
 
 class PublicConstant(_Constant):
   """
@@ -194,7 +194,7 @@ class _Variable(_Attribute):
       if self.__hasdefault__:
         return self.__default__
       else:
-        raise AttributeError("%s object has no attribute '%s'." % (instance.__class__.__name__, self.__name__))
+        raise AttributeError("'%s' object has no attribute '%s'." % (instance.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Sets the variable value."""
@@ -207,7 +207,7 @@ class _Variable(_Attribute):
     try:
       del instance.__dict__[self.__name__]
     except KeyError:
-      raise AttributeError("%s object has no attribute '%s'." % (instance.__class__.__name__, self.__name__))
+      raise AttributeError("'%s' object has no attribute '%s'." % (instance.__class__.__name__, self.__name__))
 
 class PublicVariable(_Variable):
   """
@@ -239,7 +239,7 @@ class _StaticVariable(_Variable):
       if self.__hasdefault__:
         return self.__default__
       else:
-        raise AttributeError("%s object has no attribute '%s'." % (owner.__class__.__name__, self.__name__))
+        raise AttributeError("'%s' object has no attribute '%s'." % (owner.__class__.__name__, self.__name__))
 
   def __set__(self, instance, value):
     """Sets the variable value."""
@@ -250,7 +250,7 @@ class _StaticVariable(_Variable):
     try:
       del self.__value__
     except KeyError:
-      raise AttributeError("%s object has no attribute '%s'." % (instance.__class__.__class__.__name__, self.__name__))
+      raise AttributeError("'%s' object has no attribute '%s'." % (instance.__class__.__class__.__name__, self.__name__))
 
 class PublicStaticVariable(_StaticVariable):
   """
