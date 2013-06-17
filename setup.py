@@ -11,7 +11,7 @@ if __name__ == '__main__':
     author_email='jordan.halterman@gmail.com',
     url='https://github.com/jordanhalterman/yuppy',
     keywords=['yuppy', 'oop', 'interfaces', 'encapsulation'],
-    py_modules=['yuppy'],
+    packages=['yuppy'],
     classifiers=[
       'Development Status :: 3 - Alpha',
       'Environment :: Console',
