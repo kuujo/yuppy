@@ -518,17 +518,24 @@ def instanceof(instance, interface, ducktype=True):
   except TypeError:
     raise TypeError("instanceof() arg 2 must be a class or type.")
 
+  isclass = inspect.isclass(instance)
   if ducktype:
     for key, value in interface.__dict__.items():
       if isinstance(value, AbstractAttribute):
         try:
-          instance.__class__.__dict__[key]
+          if isclass:
+            instance.__dict__[key]
+          else:
+            instance.__class__.__dict__[key]
         except KeyError:
           return False
     return True
   else:
     try:
-      return interface in instance.__class__.__interfaces__
+      if isclass:
+        return interface in instance.__interfaces__
+      else:
+        return interface in instance.__class__.__interfaces__
     except AttributeError:
       return False
 
