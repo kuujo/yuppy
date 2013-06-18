@@ -116,28 +116,27 @@ class _Variable(_Attribute):
   A abstract variable attribute.
   """
   def __init__(self, *args, **kwargs):
-    try:
-      args[0]
-    except IndexError:
-      try:
-        kwargs['default']
-      except KeyError:
-        self.__hasdefault__ = False
-        self.__default__ = None
+    if len(args) == 0:
+      self.__type__ = None
+    elif len(args) == 1:
+      if not isinstance(args[0], (list, tuple)):
+        self.__type__ = (args[0],)
       else:
-        self.__hasdefault__ = True
-        self.__default__ = kwargs['default']
+        self.__type__ = args[0]
+    else:
+      self.__type__ = args
+    try:
+      kwargs['default']
+    except KeyError:
+      self.__hasdefault__ = False
+      self.__default__ = None
     else:
       self.__hasdefault__ = True
-      self.__default__ = args[0]
-
-    for kwarg in ('type', 'validate'):
-      try:
-        kwargs[kwarg]
-      except KeyError:
-        setattr(self, '__%s__'%(kwarg,), None)
-      else:
-        setattr(self, '__%s__'%(kwarg,), kwargs[kwarg])
+      self.__default__ = kwargs['default']
+    try:
+      self.__validate__ = kwargs['validate']
+    except KeyError:
+      self.__validate__ = None
     super(_Variable, self).__init__()
 
   def _validate(self, value):
@@ -188,6 +187,20 @@ class _Variable(_Attribute):
       del instance.__dict__[self.__name__]
     except KeyError:
       raise AttributeError("'%s' object has no attribute '%s'." % (instance.__class__.__name__, self.__name__))
+
+  def default(self, value):
+    """
+    Sets the variable default value.
+    """
+    self.__default__ = value
+    return self
+
+  def validate(self, validator):
+    """
+    Sets the variable validator.
+    """
+    self.__validate__ = validator
+    return self
 
 class PublicVariable(_Variable):
   """

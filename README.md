@@ -88,7 +88,7 @@ from yuppy import *
 class Apple(object):
   """An abstract apple."""
   # Instance attributes can be automatically validated.
-  weight = private(type=float)
+  weight = private(float)
 
   def __init__(self, weight):
     self.weight = weight
@@ -144,7 +144,7 @@ class AppleTreeInterface(object):
 @implements(AppleTreeInterface)
 class AppleTree(object):
   """An apple tree."""
-  apples = protected(type=list)
+  apples = protected(list)
 
   def __init__(self):
     self.apples = []
@@ -239,7 +239,7 @@ from being accessed.
 @encapsulate
 class Apple(object):
   color = const('red')
-  weight = private(type=float)
+  weight = private(float)
 
   @public
   def get_weight(self):
@@ -263,7 +263,7 @@ from yuppy import *
 @abstract
 class Apple(object):
   """An abstract apple."""
-  weight = protected(type=float)
+  weight = protected(float)
 
   def get_weight(self):
     return self.weight
@@ -305,7 +305,7 @@ from yuppy import *
 
 @final
 class Apple(object):
-  weight = private(type=float, default=None)
+  weight = private(float, default=None)
 ```
 
 ```
@@ -371,8 +371,8 @@ AttributeError: Cannot access abstract 'GreenApple' object member 'bar'.
 ### variable
 Creates a public variable attribute.
 ```
-variable([default=None[, type=None[, validate=None]]])
-var([default=None[, type=None[, validate=None]]])
+variable([default=None[, validate=None[, *types]]])
+var([default=None[, validate=None[, *types]]])
 ```
 
 ##### Example
@@ -381,7 +381,7 @@ from yuppy import *
 
 @encapsulate
 class Apple(object):
-  foo = var(type=int, default=None, validate=lambda x: x == 1)
+  foo = var(int, default=None, validate=lambda x: x == 1)
 ```
 
 ```
@@ -466,7 +466,7 @@ Note that if an attribute (`var`, `const`, or `method`) is not passed as the
 first argument, this decorator will create a public `method` if the argument
 is a `FunctionType`, or `var` otherwise.
 ```
-public([value=None[, default=None[, type=None[, validate=None]]]])
+public([value=None[, default=None[, validate=None[, *types]]]])
 ```
 
 ##### Example
@@ -477,7 +477,7 @@ from yuppy import *
 class Apple(object):
   """An abstract apple."""
   # The two following lines result in the exact same property.
-  foo = var(type=int)
+  foo = var(int)
   bar = public(validate=lambda x: isinstance(x, int))
 
   @public
@@ -498,7 +498,7 @@ Note that if an attribute (`var`, `const`, or `method`) is not passed as
 the first argument, this decorator will create a protected `method` if
 the argument is a `FunctionType`, or `var` otherwise.
 ```
-protected([value=None[, default=None[, type=None[, validate=None]]]])
+protected([value=None[, default=None[, validate=None[, *types]]]])
 ```
 
 ##### Example
@@ -509,7 +509,7 @@ from yuppy import *
 @encapsulate
 class Apple(object):
   """An abstract apple."""
-  weight = private(type=float, default=None)
+  weight = private(float, default=None)
 
   def __init__(self, weight):
     self.weight = weight
@@ -554,7 +554,7 @@ Note that if an attribute (`var`, `const`, or `method`) is not passed as the
 first argument, this decorator will create a private `method` if the argument
 is a `FunctionType`, or `var` otherwise.
 ```
-private([value=None[, default=None[, type=None[, validate=None]]]])
+private([value=None[, default=None[, validate=None[, *types]]]])
 ```
 
 ##### Example
@@ -565,7 +565,7 @@ from yuppy import *
 @encapsulate
 class Apple(object):
   """An abstract apple."""
-  weight = private(type=float, default=None)
+  weight = private(float, default=None)
 
   def __init__(self, weight):
     self.weight = weight
@@ -606,7 +606,7 @@ Note that if an attribute (`var`, `const`, or `method`) is not passed as
 the first argument, this decorator will create a public static `method`
 if the argument is a `FunctionType`, or `var` otherwise.
 ```
-static([value=None[, default=None[, type=None[, validate=None]]]])
+static([value=None[, default=None[, validate=None[, *types]]]])
 ```
 
 ##### Example
@@ -617,7 +617,7 @@ from yuppy import *
 @encapsulate
 class Apple(object):
   """An abstract apple."""
-  weight = static(type=float, default=None)
+  weight = static(float, default=None)
 ```
 
 With static members, changes to a member variable will be applied to
@@ -643,7 +643,7 @@ be executed. This ensures that values are validated at the time they're
 set rather than when they're accessed.
 
 Any `var` type can perform data validation. When creating a new `var`,
-we can pass either `type=<type>` or `validate=<func>` to the object
+we can pass either `<type>` or `validate=<func>` to the object
 constructor.
 
 ##### Example
@@ -654,7 +654,7 @@ from yuppy import *
 @encapsulate
 class Apple(object):
   """An abstract apple."""
-  weight = var(type=float)
+  weight = var(float)
 
   def __init__(self, weight):
     self.weight = weight
