@@ -218,75 +218,74 @@ class Method(Attribute):
   """
   A method attribute.
   """
-  def __init__(self, method, *args, **kwargs):
+  def __init__(self, method):
     self.__method__ = method
-    self.__args__ = list(args)
-    self.__kwargs__ = kwargs
+    self.__params__ = None
 
   def __get__(self, instance=None, owner=None):
     arglen, kwarglen = len(self.__args__), len(self.__kwargs__)
     if arglen > 0 and kwarglen > 0:
-      def wrap(*args, **kwargs):
+      def wrap(inst, *args, **kwargs):
         self._validate(*args, **kwargs)
-        return self.__method__(*args, **kwargs)
+        return self.__method__(inst, *args, **kwargs)
     elif arglen > 0:
-      def wrap(*args):
+      def wrap(inst, *args):
         self._validate(*args)
-        return self.__method__(*args)
+        return self.__method__(inst, *args)
     elif kwarglen > 0:
-      def wrap(**kwargs):
+      def wrap(inst, **kwargs):
         self._validate(**kwargs)
-        return self.__method__(**kwargs)
+        return self.__method__(inst, **kwargs)
     else:
-      def wrap(*args, **kwargs):
-        return self.__method__(*args, **kwargs)
+      def wrap(inst, *args, **kwargs):
+        return self.__method__(inst, *args, **kwargs)
     return MethodType(wrap, instance)
 
-  def _validate(self, *args, **kwargs):
-    args = args[1:]
-    def validate(value, type):
-      if isinterface(type) and not instanceof(value, type):
-        raise TypeError("Invalid argument type %s." % (type(value),))
-      elif not isinstance(value, type):
-        raise TypeError("Invalid argument type %s." % (type(value),))
-    for i in range(len(self.__args__)):
-      try:
-        validate(args[i], self.__args__[i])
-      except IndexError:
-        continue
-    for key in self.__kwargs__:
-      try:
-        validate(kwargs[key], self.__kwargs__[key])
-      except KeyError:
-        continue
+  def __get__(self, instance=None, owner=None):
+    """Gets the method."""
+    if self.__params__ is None:
+      return MethodType(self.__method__, instance)
+    posargs, varargs, keywords, defaults = inspect.getargspec(self.__method__)
+    posargs = posargs[1:]
+    def wrap(inst, *args, **kwargs):
+      for i in range(len(posargs)):
+        try:
+          self.__params__[posargs[i]]
+        except KeyError:
+          continue
+        # Try to find the parameter in positional arguments.
+        try:
+          self.__validate_argument(posargs[i], args[i], self.__params__[posargs[i]])
+        except IndexError:
+          # Try to find the parameter in keyword arguments.
+          try:
+            self.__validate_argument(posargs[i], kwargs[posargs[i]], self.__params__[posargs[i]])
+          except KeyError:
+            pass
+      return self.__method__(inst, *args, **kwargs)
+    return MethodType(wrap, instance)
 
-def param(*args, **kwargs):
-  """
-  Decorator for a single typed method parameter.
-  """
-  arglen, kwarglen = len(args), len(kwargs)
-  if arglen > 0 and kwarglen > 0:
-    raise TypeError("param() takes exactly one argument (%d given)" % (arglen + kwarglen),)
-  elif arglen == 0 and kwarglen == 0:
-    raise TypeError("param() takes exactly one argument (0 given)")
+  def __validate_argument(self, name, value, type):
+    """
+    Validates an argument value.
+    """
+    if isinterface(type) and not instanceof(value, type):
+      raise TypeError("Method argument '%s' must be an implementation of '%s'." % (name, type.__name__))
+    elif not isinstance(value, type):
+      raise TypeError("Method argument '%s' must be an instance of '%s'." % (name, type))
 
+def params(**kwargs):
+  """
+  Decorator for defining parameter types.
+  """
   def wrap(meth):
     if not isinstance(meth, Method):
-      meth = method(meth)
-    if arglen == 1:
-      meth.__args__.insert(0, args[0])
-    elif kwarglen == 1:
-      meth.__kwargs__ = dict(meth.__kwargs__.items() + kwargs.items())
-    return meth
-  return wrap
-
-def params(*args, **kwargs):
-  """
-  Decorator for typed method parameters.
-  """
-  def wrap(meth):
-    meth.__args__ = args
-    meth.__kwargs__ = kwargs
+      meth = Method(meth)
+    args = inspect.getargspec(meth.__method__)[0]
+    for key in kwargs:
+      if key not in args:
+        raise ValueError("Invalid parameter key '%s'. That parameter was not found." % (key,))
+    meth.__params__ = kwargs
     return meth
   return wrap
 
