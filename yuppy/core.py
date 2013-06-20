@@ -273,6 +273,8 @@ class Method(Attribute):
       raise TypeError("Method argument '%s' must be an implementation of '%s'." % (name, type.__name__))
     elif not isinstance(value, type):
       raise TypeError("Method argument '%s' must be an instance of '%s'." % (name, type))
+    if not instanceof(value, type):
+      raise TypeError("Method argument '%s' must implement the same interface as %s." % (name, type))
 
 def params(**kwargs):
   """
@@ -406,9 +408,9 @@ class ObjectType(StaticType):
         for attrname, attr in base.__dict__.items():
           if isinstance(getattr(base, attrname), (FunctionType, MethodType)):
             if not hasattr(cls, attrname):
-              raise TypeError("Class '%s' is missing abstract method '%s' and must be declared abstract." % (name, attrname))
+              raise TypeError("'%s' contains an abstract method '%s' and must be declared abstract." % (name, attrname))
             elif not isinstance(getattr(cls, attrname), (FunctionType, MethodType)):
-              raise TypeError("Class '%s' attribute '%s' is not a method." % (name, attrname))
+              raise TypeError("'%s' attribute '%s' is not a method." % (name, attrname))
 
     for base in cls.__mro__:
       if isfinal(base) and cls is not base:
