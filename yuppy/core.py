@@ -551,8 +551,8 @@ def implements(interface):
       cls.__interfaces__ = []
     if interface not in cls.__interfaces__:
       cls.__interfaces__.append(interface)
-    class Implements(cls):
+    class Implementation(cls):
       pass
-    Implements.__name__ = cls.__name__
-    return Implements
+    Implementation.__name__ = cls.__name__
+    return Implementation
   return wrap
