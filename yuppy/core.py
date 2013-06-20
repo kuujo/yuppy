@@ -277,6 +277,8 @@ def abstract(obj):
   Makes a class or method abstract.
   """
   if inspect.isclass(obj):
+    if not isyuppyclass(obj):
+      obj = yuppy(obj)
     obj.__abstract__ = True
     return obj
   else:
@@ -309,6 +311,8 @@ def final(obj):
   Makes a class or method final.
   """
   if inspect.isclass(obj):
+    if not isyuppyclass(obj):
+      obj = yuppy(obj)
     obj.__final__ = True
     return obj
   else:
