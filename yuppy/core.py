@@ -218,11 +218,81 @@ class Method(Attribute):
   """
   A method attribute.
   """
-  def __init__(self, method):
+  def __init__(self, method, *args, **kwargs):
     self.__method__ = method
+    self.__args__ = list(args)
+    self.__kwargs__ = kwargs
 
   def __get__(self, instance=None, owner=None):
-    return MethodType(self.__method__, instance)
+    arglen, kwarglen = len(self.__args__), len(self.__kwargs__)
+    if arglen > 0 and kwarglen > 0:
+      def wrap(*args, **kwargs):
+        self._validate(*args, **kwargs)
+        return self.__method__(*args, **kwargs)
+    elif arglen > 0:
+      def wrap(*args):
+        self._validate(*args)
+        return self.__method__(*args)
+    elif kwarglen > 0:
+      def wrap(**kwargs):
+        self._validate(**kwargs)
+        return self.__method__(**kwargs)
+    else:
+      def wrap(*args, **kwargs):
+        return self.__method__(*args, **kwargs)
+    return MethodType(wrap, instance)
+
+  def _validate(self, *args, **kwargs):
+    args = args[1:]
+    def validate(value, type):
+      if isinterface(type) and not instanceof(value, type):
+        raise TypeError("Invalid argument type %s." % (type(value),))
+      elif not isinstance(value, type):
+        raise TypeError("Invalid argument type %s." % (type(value),))
+    for i in range(len(self.__args__)):
+      try:
+        validate(args[i], self.__args__[i])
+      except IndexError:
+        continue
+    for key in self.__kwargs__:
+      try:
+        validate(kwargs[key], self.__kwargs__[key])
+      except KeyError:
+        continue
+
+def param(*args, **kwargs):
+  """
+  Decorator for a single typed method parameter.
+  """
+  arglen, kwarglen = len(args), len(kwargs)
+  if arglen > 0 and kwarglen > 0:
+    raise TypeError("param() takes exactly one argument (%d given)" % (arglen + kwarglen),)
+  elif arglen == 0 and kwarglen == 0:
+    raise TypeError("param() takes exactly one argument (0 given)")
+
+  def wrap(meth):
+    if not isinstance(meth, Method):
+      meth = method(meth)
+    if arglen == 1:
+      if meth.__args__ is None:
+        meth.__args__ = []
+      meth.__args__.insert(0, args[0])
+    elif kwarglen == 1:
+      if meth.__kwargs__ is None:
+        meth.__kwargs__ = {}
+      meth.__kwargs__ = dict(meth.__kwargs__.items() + kwargs.items())
+    return meth
+  return wrap
+
+def params(*args, **kwargs):
+  """
+  Decorator for typed method parameters.
+  """
+  def wrap(meth):
+    meth.__args__ = args
+    meth.__kwargs__ = kwargs
+    return meth
+  return wrap
 
 def abstract(obj):
   """
