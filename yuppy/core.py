@@ -258,14 +258,11 @@ class Method(Attribute):
     """
     if isinstance(value, type):
       return True
-    if isinterface(type):
-      if instanceof(value, type):
-        return True
-      else:
-        raise TypeError("Method argument '%s' must be an implementation of '%s'." % (name, type.__name__))
+    if instanceof(value, type):
+      return True
     else:
-      if instanceof(value, type):
-        return True
+      if isinterface(type):
+        raise TypeError("Method argument '%s' must be an implementation of '%s'." % (name, type.__name__))
       else:
         raise TypeError("Method argument '%s' must implement the same interface as %s." % (name, type))
 
