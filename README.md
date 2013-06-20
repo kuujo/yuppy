@@ -313,9 +313,6 @@ class RedApple(Object):
   color = const('red')
 ```
 
-Note that while the class constant can be overridden, the instance constant
-will not change regardless of the class constant value.
-
 ```
 >>> RedApple.color
 'red'
@@ -404,9 +401,7 @@ Note what happens if we try to use abstract methods or fail to override them.
 ...
 >>> # We can still instantiate green apples since the class isn't declared abstract.
 >>> apple = GreenApple()
->>> # But we can't access the get_color() method.
->>> apple.get_color()
-AttributeError: Cannot access abstract 'GreenApple' object member 'bar'.
+TypeError: Cannot instantiate abstract class 'GreenApple'.
 ```
 
 ### final
