@@ -9,50 +9,19 @@ def isattribute(obj):
   """
   return isinstance(obj, Attribute)
 
-def abstract(obj):
-  """
-  Makes a class or method abstract.
-  """
-  if inspect.isclass(obj):
-    obj.__abstract__ = True
-    return obj
-  else:
-    if isinstance(obj, FunctionType):
-      return AbstractMethod(obj)
-    raise TypeError("Invalid abstract attribute %s." % (obj,))
-
-def isabstract(obj):
-  """
-  Returns a boolean value indicating whether an object is abstract.
-  """
-  if hasattr(obj, '__dict__'):
-    return obj.__dict__.get('__abstract__', False)
-  else:
-    return getattr(obj, '__abstract__', False)
-
-def final(obj):
-  """
-  Makes a class or method final.
-  """
-  if inspect.isclass(obj):
-    obj.__final__ = True
-    return obj
-  else:
-    if isinstance(obj, FunctionType):
-      return FinalMethod(obj)
-    raise TypeError("Invalid final attribute %s." % (obj,))
-
-def isfinal(obj):
-  """
-  Returns a boolean value indicating whether an object is final.
-  """
-  return getattr(obj, '__final__', False)
-
 class Attribute(object):
   """
   A basic attribute.
   """
   __name__ = None
+
+def constant(value):
+  """
+  Decorator for creating a constant class/instance variable.
+  """
+  return Constant(value)
+
+const = constant
 
 class Constant(Attribute):
   """
@@ -72,6 +41,22 @@ class Constant(Attribute):
   def __del__(self, instance):
     """Raises an attribute error when an attempt is made to delete the constant value."""
     raise AttributeError("Cannot delete constant value.")
+
+def isconstant(obj):
+  """
+  Indicates whether an object is a constant value.
+  """
+  return isinstance(obj, Constant)
+
+isconst = isconstant
+
+def variable(*args, **kwargs):
+  """
+  Decorator for creating an instance variable.
+  """
+  return Variable(*args, **kwargs)
+
+var = variable
 
 class Variable(Attribute):
   """
@@ -157,6 +142,68 @@ class Variable(Attribute):
       except AttributeError:
         raise AttributeError("Instance member '%s' cannot be accessed from the class scope." % (self.__name__,))
 
+  def default(self, value):
+    """
+    Sets the variable default value.
+    """
+    self.__default__ = value
+    return self
+
+  def validate(self, validator):
+    """
+    Sets the variable validator.
+    """
+    if isinterface(validator):
+      self.__interface__ = validator
+    else:
+      self.__validate__ = validator
+    return self
+
+def isvariable(obj):
+  """
+  Indicates whether an object is a variable.
+  """
+  return isinstance(obj, Variable)
+
+isvar = isvariable
+
+def static(*args, **kwargs):
+  """
+  Decorator for creating a static (class) variable.
+  """
+  return StaticVariable(*args, **kwargs)
+
+class StaticVariable(Variable):
+  """
+  A static variable attribute.
+  """
+  def __get__(self, instance, owner=None):
+    """Gets the variable value."""
+    try:
+      return self.__value__
+    except AttributeError:
+      if self.__hasdefault__:
+        return self.__default__
+      else:
+        raise AttributeError("'%s' object has no attribute '%s'." % (owner.__class__.__name__, self.__name__))
+
+  def __set__(self, instance, value):
+    """Sets the variable value."""
+    self.__value__ = self._validate(value)
+
+  def __del__(self, instance):
+    """Deletes the variable value."""
+    try:
+      del self.__value__
+    except KeyError:
+      raise AttributeError("'%s' object has no attribute '%s'." % (instance.__class__.__class__.__name__, self.__name__))
+
+def isstatic(obj):
+  """
+  Indicates whether an object is a static variable.
+  """
+  return isinstance(obj, StaticVariable)
+
 class Method(Attribute):
   """
   A method attribute.
@@ -166,6 +213,18 @@ class Method(Attribute):
 
   def __get__(self, instance=None, owner=None):
     return self.__method__
+
+def abstract(obj):
+  """
+  Makes a class or method abstract.
+  """
+  if inspect.isclass(obj):
+    obj.__abstract__ = True
+    return obj
+  else:
+    if isinstance(obj, FunctionType):
+      return AbstractMethod(obj)
+    raise TypeError("Invalid abstract attribute %s." % (obj,))
 
 class AbstractMethod(Method):
   """
@@ -178,6 +237,27 @@ class AbstractMethod(Method):
   def __get__(self, instance=None, owner=None):
     raise AttributeError("Cannot call abstract method %s." % (self.__method__.__name__,))
 
+def isabstract(obj):
+  """
+  Returns a boolean value indicating whether an object is abstract.
+  """
+  if hasattr(obj, '__dict__'):
+    return obj.__dict__.get('__abstract__', False)
+  else:
+    return getattr(obj, '__abstract__', False)
+
+def final(obj):
+  """
+  Makes a class or method final.
+  """
+  if inspect.isclass(obj):
+    obj.__final__ = True
+    return obj
+  else:
+    if isinstance(obj, FunctionType):
+      return FinalMethod(obj)
+    raise TypeError("Invalid final attribute %s." % (obj,))
+
 class FinalMethod(Method):
   """
   A final method attribute.
@@ -185,6 +265,12 @@ class FinalMethod(Method):
   def __init__(self, method):
     self.__final__ = True
     super(FinalMethod, self).__init__(method)
+
+def isfinal(obj):
+  """
+  Returns a boolean value indicating whether an object is final.
+  """
+  return getattr(obj, '__final__', False)
 
 class StaticType(type):
   """
