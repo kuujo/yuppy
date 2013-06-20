@@ -376,7 +376,7 @@ class StaticType(type):
         raise AttributeError("Cannot delete '%s' attribute '%s'." % (cls.__name__, name))
     super(StaticType, cls).__delattr__(name)
 
-class ObjectType(StaticType):
+class ClassType(StaticType):
   """
   A yuppy class type.
   """
@@ -394,7 +394,7 @@ class ObjectType(StaticType):
       init = attrs['__init__']
     cls.__init__ = get_init_wrapper(init)
 
-    super(ObjectType, cls).__init__(name, bases, attrs)
+    super(ClassType, cls).__init__(name, bases, attrs)
     class_isabstract = False
     interfaces = getattr(cls, '__interfaces__', [])
     for interface in interfaces:
@@ -449,7 +449,7 @@ def yuppy(cls):
   Decorator for yuppy classes.
   """
   class Object(cls):
-    __metaclass__ = ObjectType
+    __metaclass__ = ClassType
   Object.__name__ = cls.__name__
   return Object
 
@@ -526,7 +526,7 @@ def implements(interface):
   Decorator for implementing an interface.
 
   Wraps the implementing class in an Object if necessary, and adds the implementation.
-  The class is then extended so as to invoke the ObjectType.__init__() method in order
+  The class is then extended so as to invoke the ClassType.__init__() method in order
   to check for adherence to the given interface.
   """
   def wrap(cls):
@@ -538,8 +538,8 @@ def implements(interface):
       cls.__interfaces__ = []
     if interface not in cls.__interfaces__:
       cls.__interfaces__.append(interface)
-    class _Implements(cls):
+    class Implements(cls):
       pass
-    _Implements.__name__ = cls.__name__
-    return _Implements
+    Implements.__name__ = cls.__name__
+    return Implements
   return wrap

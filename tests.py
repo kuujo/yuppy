@@ -2,7 +2,7 @@ import unittest
 from yuppy import *
 
 class Constant(object):
-  __metaclass__ = ObjectType
+  __metaclass__ = ClassType
   foo = const('bar')
 
 class ConstantTestCase(unittest.TestCase):
@@ -22,7 +22,7 @@ class ConstantTestCase(unittest.TestCase):
     self.assertEquals(instance.foo, 'bar')
 
 class Variable(object):
-  __metaclass__ = ObjectType
+  __metaclass__ = ClassType
   foo = var(default=2, type=int, validate=lambda x: x == 1)
 
 class VariableTestCase(unittest.TestCase):
@@ -39,13 +39,13 @@ class VariableTestCase(unittest.TestCase):
     setfoo(1)
 
 class Method(object):
-  __metaclass__ = ObjectType
+  __metaclass__ = ClassType
   @method
   def foo(self):
     return 'bar'
 
 class MethodParams(object):
-  __metaclass__ = ObjectType
+  __metaclass__ = ClassType
   @params(foo=int, bar=basestring)
   def foobarbaz(self, foo, bar=None):
     pass
@@ -69,7 +69,7 @@ class MethodTestCase(unittest.TestCase):
     instance.foobarbaz(1, bar='two')
 
 class StaticVariable(object):
-  __metaclass__ = ObjectType
+  __metaclass__ = ClassType
   foo = static(type=int, validate=lambda x: x == 1)
 
 class StaticVariableTestCase(unittest.TestCase):
@@ -90,7 +90,7 @@ class StaticVariableTestCase(unittest.TestCase):
 @final
 class Foo(object):
   """A final class."""
-  __metaclass__ = ObjectType
+  __metaclass__ = ClassType
 
 class FinalTestCase(unittest.TestCase):
   """

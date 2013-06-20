@@ -48,12 +48,12 @@ object walks and talks like a duck.
 ```python
 from yuppy import *
 
-# Yuppy classes must either extend the base yuppy.Object class or use
+# Yuppy classes must either use the base yuppy.ClassType metaclass or use
 # the @yuppy.yuppy decorator.
 # In this case, we're creating an abstract base class "Apple" with a
 # couple of abstract methods for getting attributes.
 @abstract
-class Apple(Object):
+class Apple(object):
   """An abstract apple."""
   @abstract
   def get_color(self):
@@ -64,7 +64,8 @@ class Apple(Object):
     """Sets the apple color."""
 
 # Create an interface for objects that can be eaten.
-class IEatable(Interface):
+@interface
+class IEatable(object):
   """An interface that supports eating."""
   def eat(self):
     """Eats an apple."""
@@ -109,7 +110,7 @@ class ITree(object):
 
 # Even without extending the Interface class, we can use ITree as an interface.
 @implements(ITree)
-class Tree(Object):
+class Tree(object):
   apples = var(set)
 
   def __init__(self):
@@ -145,19 +146,20 @@ yuppy(cls)
 ```
 
 This decorator is not required to implement a Yuppy class. The recommended
-alternative to using the `yuppy` decorator is to use the `yuppy.Object`
-superclass in your class definition. The decorator simply dynamically
-extends any class to include the `yuppy.Object` class in its hierarchy.
+alternative to using the `yuppy` decorator is to use the `yuppy.ClassType`
+metaclass in your class definition. The decorator simply dynamically
+extends any class to use the `yuppy.ClassType` metaclass in its definition.
 
 ```python
-from yuppy import Object, yuppy
-
-class Apple(Object):
-  """This is a Yuppy class."""
+from yuppy import ClassType, yuppy
 
 @yuppy
 class Apple(object):
+  """This is a Yuppy class."""
+
+class Apple(object):
   """This is also a Yuppy class."""
+  __metaclass__ = ClassType
 ```
 
 ### abstract
@@ -175,10 +177,10 @@ abstract.
 
 ##### Example
 ```python
-from yuppy import Object, abstract
+from yuppy import abstract
 
 @abstract
-class Apple(Object):
+class Apple(object):
   """An abstract apple."""
   weight = var(float)
 
@@ -218,10 +220,10 @@ final(cls)
 ##### Example
 
 ```python
-from yuppy import Object
+from yuppy import final
 
 @final
-class Apple(Object):
+class Apple(object):
   weight = var(float, default=None)
 ```
 
@@ -244,9 +246,10 @@ var([default=None[, validate=None[, *types]]])
 
 ##### Example
 ```python
-from yuppy import Object
+from yuppy import yuppy, var
 
-class Apple(Object):
+@yuppy
+class Apple(object):
   foo = var(int, default=None, validate=lambda x: x == 1)
 ```
 
@@ -269,9 +272,10 @@ static([default=None[, validate=None[, *types]]])
 ##### Example
 
 ```python
-from yuppy import Object, static
+from yuppy import yuppy, static
 
-class Apple(Object):
+@yuppy
+class Apple(object):
   """An abstract apple."""
   weight = static(float, default=None)
 ```
@@ -307,9 +311,10 @@ const(value)
 
 ##### Example
 ```python
-from yuppy import Object, const
+from yuppy import yuppy, const
 
-class RedApple(Object):
+@yuppy
+class RedApple(object):
   color = const('red')
 ```
 
@@ -340,9 +345,10 @@ method(callback)
 
 ##### Example
 ```python
-from yuppy import Object, var, method
+from yuppy import yuppy, var, method
 
-class Apple(Object):
+@yuppy
+class Apple(object):
   color = var(default='red')
 
   @method
@@ -370,10 +376,10 @@ that any class that contains abstract methods be declared abstract.
 
 ##### Example
 ```python
-from yuppy import abstract, Object
+from yuppy import abstract
 
 @abstract
-class Apple(Object):
+class Apple(object):
   """An abstract apple."""
   @abstract
   def get_color(self):
@@ -384,7 +390,7 @@ Once we've defined an abstract class, we can extend it and override the
 abstract methods.
 
 ```
->>> class GreenApple(Object):
+>>> class GreenApple(object):
 ...   def get_color(self):
 ...     return 'green'
 ...
@@ -396,7 +402,7 @@ abstract methods.
 Note what happens if we try to use abstract methods or fail to override them.
 
 ```
->>> class GreenApple(Object):
+>>> class GreenApple(object):
 ...   pass
 ...
 >>> # We can still instantiate green apples since the class isn't declared abstract.
@@ -416,9 +422,10 @@ attempts to override a final method, a `TypeError` will be raised.
 ##### Example
 
 ```python
-from yuppy import Object, final
+from yuppy import yuppy, final
 
-class RedApple(Object):
+@yuppy
+class RedApple(object):
   @final
   def getcolor(self):
     return 'red'
@@ -445,9 +452,10 @@ constructor.
 ##### Example
 
 ```python
-from yuppy import Object, var
+from yuppy import yuppy, var
 
-class Apple(Object):
+@yuppy
+class Apple(object):
   """An abstract apple."""
   weight = var(float)
 
@@ -479,20 +487,22 @@ object walks and talks like a duck. For this reason, Yuppy interface
 evaluation supports both explicit interface implementation checks _and_
 implicit interface implementation checks, or duck typing.
 
-### Interface
-An abstract base class for interfaces.
+### interface
+Creates a Yuppy interface.
 
-The `yuppy.Interface` class is the equivalent of `yuppy.Object` for interfaces.
-Abstract interface attributes are declared by simply creating them. Yuppy
-will evaluate the interface for any public attributes and consider those
-to be required of any implementing classes.
+The `yuppy.interface` decorator is the equivalent of `yuppy.yuppy` for
+interfaces. The decorator simply wraps the given class and declares the
+`yuppy.InterfaceType` metaclass. Abstract interface attributes are declared
+by simply creating them. Yuppy will evaluate the interface for any public
+attributes and consider those to be required of any implementing classes.
 
 ##### Example
 
 ```python
-from yuppy import Interface
+from yuppy import interface
 
-class AppleInterface(Interface):
+@interface
+class AppleInterface(object):
   """An apple interface."""
   def get_color(self):
     """Returns the apple color."""
@@ -544,10 +554,11 @@ Continuing with the previous example, we can implement the `AppleInterface`
 interface.
 
 ```
->>> from yuppy import Object, implements
+>>> from yuppy import implements
 >>> @implements(AppleInterface)
-... class Apple(Object):
+... class Apple(object):
 ...   """An apple."""
+...   __metaclass__ = ClassType
 ...
 TypeError: 'Apple' contains an abstract method 'get_color' and must be declared abstract.
 ```
@@ -556,9 +567,9 @@ Note that if we don't implement the `AppleInterface` attributes a `TypeError`
 will be raised. Let's try that again.
 
 ```
->>> from yuppy import implements, Object, const
+>>> from yuppy import implements, const
 >>> @implements(AppleInterface)
-... class Apple(Object):
+... class Apple(object):
 ...   """An apple."""
 ...   color = const('red')
 ...   weight = const(2.0)
@@ -614,9 +625,10 @@ class or Yuppy interface. This allows for flexible type checking based on
 either `isinstance` or straight duck-typing.
 
 ```python
-from yuppy import Object, params
+from yuppy import yuppy, params
 
-class Apple(Object):
+@yuppy
+class Apple(object):
   """A base apple."""
   color = var(basestring, default='red')
 
@@ -645,7 +657,7 @@ TypeError: Method argument 'weight' must be an instance of '(<type 'float'>, <ty
 Also, remember that Yuppy type checking can be interface-based.
 
 ```python
-from yuppy import Object, params
+from yuppy import yuppy, params
 
 class IApple(object):
   def get_color(self):
@@ -653,7 +665,8 @@ class IApple(object):
   def get_weight(self):
     pass
 
-class AppleTree(Object):
+@yuppy
+class AppleTree(object):
   def __init__(self):
     self.apples = []
 
@@ -666,8 +679,9 @@ class AppleTree(Object):
 >>> tree = AppleTree()
 >>> tree.add_apple('foo')
 TypeError: Method argument 'apple' must be an instance of 'IApple'.
->>> from yuppy import Object
+>>> from yuppy import ClassType
 >>> class Apple(Object):
+...   __metaclass__ = ClassType
 ...   def get_color(self):
 ...     return 'red'
 ...   def get_weight(self):
