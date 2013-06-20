@@ -1,7 +1,8 @@
 import unittest
 from yuppy import *
 
-class Constant(Object):
+class Constant(object):
+  __metaclass__ = ObjectType
   foo = const('bar')
 
 class ConstantTestCase(unittest.TestCase):
@@ -20,7 +21,8 @@ class ConstantTestCase(unittest.TestCase):
     instance = Constant()
     self.assertEquals(instance.foo, 'bar')
 
-class Variable(Object):
+class Variable(object):
+  __metaclass__ = ObjectType
   foo = var(default=2, type=int, validate=lambda x: x == 1)
 
 class VariableTestCase(unittest.TestCase):
@@ -36,12 +38,14 @@ class VariableTestCase(unittest.TestCase):
     self.assertRaises(AttributeError, setfoo, 2)
     setfoo(1)
 
-class Method(Object):
+class Method(object):
+  __metaclass__ = ObjectType
   @method
   def foo(self):
     return 'bar'
 
-class MethodParams(Object):
+class MethodParams(object):
+  __metaclass__ = ObjectType
   @params(foo=int, bar=basestring)
   def foobarbaz(self, foo, bar=None):
     pass
@@ -64,7 +68,8 @@ class MethodTestCase(unittest.TestCase):
     instance.foobarbaz(foo=1, bar='two')
     instance.foobarbaz(1, bar='two')
 
-class StaticVariable(Object):
+class StaticVariable(object):
+  __metaclass__ = ObjectType
   foo = static(type=int, validate=lambda x: x == 1)
 
 class StaticVariableTestCase(unittest.TestCase):
@@ -83,8 +88,9 @@ class StaticVariableTestCase(unittest.TestCase):
     self.assertEquals(instance2.foo, 1)
 
 @final
-class Foo(Object):
+class Foo(object):
   """A final class."""
+  __metaclass__ = ObjectType
 
 class FinalTestCase(unittest.TestCase):
   """
@@ -97,7 +103,8 @@ class FinalTestCase(unittest.TestCase):
     foo = Foo()
     self.assertRaises(TypeError, extend_final)
 
-class FooInterface(Interface):
+class FooInterface(object):
+  __metaclass__ = InterfaceType
   def foo(self):
     pass
   def bar(self):

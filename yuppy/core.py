@@ -381,13 +381,26 @@ class ObjectType(StaticType):
   A yuppy class type.
   """
   def __init__(cls, name, bases, attrs):
+    def get_init_wrapper(new):
+      def wrapped(self, *args, **kwargs):
+        if isabstract(self.__class__):
+          raise TypeError("Cannot instantiate abstract class '%s'." % (self.__class__.__name__,))
+        new(self, *args, **kwargs)
+      return wrapped
+
+    if not attrs.has_key('__init__'):
+      init = lambda self, *args, **kwargs: None
+    else:
+      init = attrs['__init__']
+    cls.__init__ = get_init_wrapper(init)
+
     super(ObjectType, cls).__init__(name, bases, attrs)
     class_isabstract = False
     interfaces = getattr(cls, '__interfaces__', [])
     for interface in interfaces:
       for base in interface.__mro__:
         for attrname, attr in base.__dict__.items():
-          if isinstance(getattr(base, attrname), (FunctionType, MethodType)):
+          if not attrname.startswith('_') and isinstance(getattr(base, attrname), (FunctionType, MethodType)):
             if not hasattr(cls, attrname):
               raise TypeError("'%s' contains an abstract method '%s' and must be declared abstract." % (name, attrname))
             elif not isinstance(getattr(cls, attrname), (FunctionType, MethodType)):
@@ -431,37 +444,12 @@ class ObjectType(StaticType):
     if class_isabstract:
       setattr(cls, '__abstract__', True)
 
-class Object(object):
-  """
-  A yuppy base class.
-  """
-  __metaclass__ = ObjectType
-  def __new__(cls, *args, **kwargs):
-    if isabstract(cls):
-      raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
-    return object.__new__(cls, *args, **kwargs)
-
-  def __setattr__(self, name, value):
-    if isattribute(value):
-      setattr(self.__class__, name, value)
-    else:
-      super(Object, self).__setattr__(name, value)
-
 def yuppy(cls):
   """
   Decorator for yuppy classes.
   """
   class Object(cls):
     __metaclass__ = ObjectType
-    def __new__(cls, *args, **kwargs):
-      if isabstract(cls):
-        raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
-      return object.__new__(cls, *args, **kwargs)
-    def __setattr__(self, name, value):
-      if isattribute(value):
-        setattr(self.__class__, name, value)
-      else:
-        super(Object, self).__setattr__(name, value)
   Object.__name__ = cls.__name__
   return Object
 
@@ -486,23 +474,28 @@ class InterfaceType(StaticType):
         attr.__name__ = attrname
       if not attrname.startswith('_') and isinstance(attr, FunctionType):
         attrs[attrname] = AbstractMethod(attr)
+    def initializer(cls, *args, **kwargs):
+      raise TypeError("Cannot instantiate interface '%s'." % (cls.__name__,))
+    cls.__new__ = MethodType(initializer, cls)
     super(InterfaceType, cls).__init__(name, bases, attrs)
 
-class Interface(object):
+def interface(cls):
   """
-  A yuppy interface class.
+  Decorator for yuppy interfaces.
   """
-  __metaclass__ = InterfaceType
-
-  def __new__(cls, *args, **kwargs):
-    """Raises a TypeError when the interface is instantiated."""
-    raise TypeError("Cannot instantiate interface '%s'." % (cls.__name__,))
+  class Interface(cls):
+    __metaclass__ = InterfaceType
+  Interface.__name__ = cls.__name__
+  return Interface
 
 def isinterface(cls):
   """
   Indicates whether the given class is an interface.
   """
-  return isinstance(cls, Interface)
+  try:
+    return cls.__metaclass__ is InterfaceType
+  except AttributeError:
+    return False
 
 def instanceof(obj, interface, ducktype=True):
   """
