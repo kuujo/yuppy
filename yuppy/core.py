@@ -223,26 +223,7 @@ class Method(Attribute):
     self.__params__ = None
 
   def __get__(self, instance=None, owner=None):
-    arglen, kwarglen = len(self.__args__), len(self.__kwargs__)
-    if arglen > 0 and kwarglen > 0:
-      def wrap(inst, *args, **kwargs):
-        self._validate(*args, **kwargs)
-        return self.__method__(inst, *args, **kwargs)
-    elif arglen > 0:
-      def wrap(inst, *args):
-        self._validate(*args)
-        return self.__method__(inst, *args)
-    elif kwarglen > 0:
-      def wrap(inst, **kwargs):
-        self._validate(**kwargs)
-        return self.__method__(inst, **kwargs)
-    else:
-      def wrap(inst, *args, **kwargs):
-        return self.__method__(inst, *args, **kwargs)
-    return MethodType(wrap, instance)
-
-  def __get__(self, instance=None, owner=None):
-    """Gets the method."""
+    """Gets the method, applying type hinting to method arguments."""
     if self.__params__ is None:
       return MethodType(self.__method__, instance)
     posargs, varargs, keywords, defaults = inspect.getargspec(self.__method__)
