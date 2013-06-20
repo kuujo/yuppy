@@ -3,17 +3,17 @@
 from types import FunctionType, MethodType
 import inspect
 
-def isattribute(obj):
-  """
-  Returns a boolean value indicating whether an object is an attribute.
-  """
-  return isinstance(obj, Attribute)
-
 class Attribute(object):
   """
   A basic attribute.
   """
   __name__ = None
+
+def isattribute(obj):
+  """
+  Returns a boolean value indicating whether an object is an attribute.
+  """
+  return isinstance(obj, Attribute)
 
 def constant(value):
   """
@@ -128,7 +128,7 @@ class Variable(Attribute):
   def __set__(self, instance, value):
     """Sets the variable value."""
     try:
-      instance.__dict__[self.__name__]
+      instance.__dict__
     except AttributeError:
       raise AttributeError("Instance member '%s' cannot be accessed from the class scope." % (self.__name__,))
     else:
@@ -173,6 +173,8 @@ def static(*args, **kwargs):
   """
   return StaticVariable(*args, **kwargs)
 
+stat = static
+
 class StaticVariable(Variable):
   """
   A static variable attribute.
@@ -204,6 +206,14 @@ def isstatic(obj):
   """
   return isinstance(obj, StaticVariable)
 
+isstat = isstatic
+
+def method(meth):
+  """
+  Decorator for creating a method.
+  """
+  return Method(meth)
+
 class Method(Attribute):
   """
   A method attribute.
@@ -212,7 +222,7 @@ class Method(Attribute):
     self.__method__ = method
 
   def __get__(self, instance=None, owner=None):
-    return self.__method__
+    return MethodType(self.__method__, instance)
 
 def abstract(obj):
   """
@@ -308,34 +318,22 @@ class StaticType(type):
     """Prevents overriding explicitly set attributes."""
     if isinstance(name, basestring) and not (name.startswith('__') and name.endswith('__')):
       if isattribute(cls._findattr(name, None)):
-        raise TypeError("Cannot override '%s' attribute '%s' by assignment." % (cls.__name__, name))
+        raise AttributeError("Cannot override '%s' attribute '%s' by assignment." % (cls.__name__, name))
     super(StaticType, cls).__setattr__(name, value)
 
   def __delattr__(cls, name):
     """Prevents deleting explicitly set attributes."""
     if isinstance(name, basestring) and not (name.startswith('__') and name.endswith('__')):
       if isattribute(cls._findattr(name, None)):
-        raise TypeError("Cannot delete '%s' attribute '%s'." % (cls.__name__, name))
+        raise AttributeError("Cannot delete '%s' attribute '%s'." % (cls.__name__, name))
     super(StaticType, cls).__delattr__(name)
 
-class InterfaceType(StaticType):
-  """
-  A yuppy interface.
-  """
-  def __init__(cls, name, bases, attrs):
-    for attrname, attr in attrs.items():
-      if isattribute(attr):
-        attr.__name__ = attrname
-      if not attrname.startswith('_') and isinstance(attr, FunctionType):
-        attrs[attrname] = AbstractMethod(attr)
-    super(InterfaceType, cls).__init__(name, bases, attrs)
-
-class ClassType(StaticType):
+class ObjectType(StaticType):
   """
   A yuppy class type.
   """
   def __init__(cls, name, bases, attrs):
-    super(ClassType, cls).__init__(name, bases, attrs)
+    super(ObjectType, cls).__init__(name, bases, attrs)
     class_isabstract = False
     interfaces = getattr(cls, '__interfaces__', [])
     for interface in interfaces:
@@ -343,9 +341,9 @@ class ClassType(StaticType):
         for attrname, attr in base.__dict__.items():
           if isinstance(getattr(base, attrname), (FunctionType, MethodType)):
             if not hasattr(cls, attrname):
-              raise AttributeError("Class '%s' is missing abstract method '%s' and must be declared abstract." % (name, attrname))
+              raise TypeError("Class '%s' is missing abstract method '%s' and must be declared abstract." % (name, attrname))
             elif not isinstance(getattr(cls, attrname), (FunctionType, MethodType)):
-              raise AttributeError("Class '%s' attribute '%s' is not a method." % (name, attrname))
+              raise TypeError("Class '%s' attribute '%s' is not a method." % (name, attrname))
 
     for base in cls.__mro__:
       if isfinal(base) and cls is not base:
@@ -389,7 +387,7 @@ class Object(object):
   """
   A yuppy base class.
   """
-  __metaclass__ = ClassType
+  __metaclass__ = ObjectType
   def __new__(cls, *args, **kwargs):
     if isabstract(cls):
       raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
@@ -406,13 +404,41 @@ def yuppy(cls):
   Decorator for yuppy classes.
   """
   class Object(cls):
-    __metaclass__ = ClassType
+    __metaclass__ = ObjectType
     def __new__(cls, *args, **kwargs):
       if isabstract(cls):
         raise TypeError("Cannot instantiate abstract class '%s'." % (cls.__name__,))
       return object.__new__(cls, *args, **kwargs)
+    def __setattr__(self, name, value):
+      if isattribute(value):
+        setattr(self.__class__, name, value)
+      else:
+        super(Object, self).__setattr__(name, value)
   Object.__name__ = cls.__name__
   return Object
+
+def isyuppyclass(cls):
+  """
+  Indicates whether a class is a Yuppy class.
+  """
+  try:
+    return cls.__metaclass__ is ClassType
+  except AttributeError:
+    return False
+
+isyuppy = isyuppyclass
+
+class InterfaceType(StaticType):
+  """
+  A yuppy interface.
+  """
+  def __init__(cls, name, bases, attrs):
+    for attrname, attr in attrs.items():
+      if isattribute(attr):
+        attr.__name__ = attrname
+      if not attrname.startswith('_') and isinstance(attr, FunctionType):
+        attrs[attrname] = AbstractMethod(attr)
+    super(InterfaceType, cls).__init__(name, bases, attrs)
 
 class Interface(object):
   """
@@ -421,6 +447,7 @@ class Interface(object):
   __metaclass__ = InterfaceType
 
   def __new__(cls, *args, **kwargs):
+    """Raises a TypeError when the interface is instantiated."""
     raise TypeError("Cannot instantiate interface '%s'." % (cls.__name__,))
 
 def isinterface(cls):
@@ -456,13 +483,13 @@ def instanceof(obj, interface, ducktype=True):
 def implements(interface):
   """
   Decorator for implementing an interface.
+
+  Wraps the implementing class in an Object if necessary, and adds the implementation.
+  The class is then extended so as to invoke the ObjectType.__init__() method in order
+  to check for adherence to the given interface.
   """
   def wrap(cls):
-    try:
-      isclasstype = cls.__metaclass__ is ClassType
-    except AttributeError:
-      isclasstype = False
-    if not isclasstype:
+    if not isyuppyclass(cls):
       cls = yuppy(cls)
     try:
       cls.__interfaces__
