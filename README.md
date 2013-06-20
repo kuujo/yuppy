@@ -16,6 +16,7 @@ designed to fit with the Python development culture, not circumvent it.
 ### Table of contents
 -------------------
 1. [Introduction](#but-type-checking-is-bad)
+1. [A Complete Example](#a-complete-example)
 1. [Class Decorators](#class-decorators)
    * [The Yuppy Decorator](#yuppy-1)
    * [Abstract Classes](#abstract)
@@ -42,6 +43,97 @@ duck-typing, so any class can serve as a Yuppy interface. This feature
 simply serves as a more efficient way to determine whether any given
 object walks and talks like a duck.
 
+## A Complete Example
+
+```python
+from yuppy import *
+
+# Yuppy classes must either extend the base yuppy.Object class or use
+# the @yuppy.yuppy decorator.
+# In this case, we're creating an abstract base class "Apple" with a
+# couple of abstract methods for getting attributes.
+@abstract
+class Apple(Object):
+  """An abstract apple."""
+  @abstract
+  def get_color(self):
+    """Gets the apple color."""
+
+  @abstract
+  def set_color(self):
+    """Sets the apple color."""
+
+# Create an interface for objects that can be eaten.
+class IEatable(Interface):
+  """An interface that supports eating."""
+  def eat(self):
+    """Eats an apple."""
+
+# Now, we can implement a concret "GreenApple" class. Note that we must
+# implement the abstract get_color() and set_color() methods or else we
+# have to explicitly declare the class once again @abstract. Similarly,
+# we are implementing the IEatable interface, so we must implement all
+# the IEatable methods or else declare the class abstract.
+@implements(IEatable)
+class GreenApple(Apple):
+  """A concrete green apple."""
+  # Don't allow the green apple color to be changed.
+  color = const('green')
+
+  # Create a float weight.
+  weight = var(float)
+
+  # Override the get_color() abstract method.
+  def get_color(self):
+    return self.color
+
+  # Override the set_color() abstract method. We'll just raise an error.
+  def set_color(self, value):
+    raise AttributeError("Cannot set green apple color.")
+
+  # Implement a method to set the green apple weight. Here we use type
+  # hinting to ensure that the weight argument is an integer or float.
+  # Note that we can also use interfaces for type hinting, including any
+  # class that does not extend the yuppy.Interface class (which results
+  # in an attribute-based comparison, e.g. duck typing).
+  @params(weight=(int, float))
+  def set_weight(self, weight):
+    self.weight = weight
+
+# Implement an implicit interface.
+class ITree(object):
+  def add_apple(self, apple):
+    """Adds an apple to the tree."""
+  def remove_apple(self, apple):
+    """Removes an apple from the tree."""
+
+# Even without extending the Interface class, we can use ITree as an interface.
+@implements(ITree)
+class Tree(Object):
+  apples = var(set)
+
+  def __init__(self):
+    self.apples = set()
+
+  # We can use any class or interface for type hinting. If an Apple instance
+  # is not passed as the 'apple' argument, the argument will be compared to
+  # the Apple class to determine whether it is equivalent by attributes.
+  @params(apple=Apple)
+  def add_apple(self, apple):
+    self.apples.add(apple)
+
+  @params(apple=Apple)
+  def remove_apple(self, apple):
+    self.apples.remove(apple)
+```
+
+Of course, in the real world this would be an unrealistic example. Python's
+flexibility and features like data descriptors remove the need for getters
+and setters that are necessary in other languages (this is one reason that
+Yuppy does not attempt encapsulation). But, indeed, these features can be
+very useful in ultimately reducing the code required for error handling by
+helping ensure the integrity of data from the time it is set on an object
+or passed to an instance method.
 
 ## Class Decorators
 
@@ -64,7 +156,7 @@ class Apple(Object):
   """This is a Yuppy class."""
 
 @yuppy
-class Apple(Object):
+class Apple(object):
   """This is also a Yuppy class."""
 ```
 
@@ -75,8 +167,11 @@ Creates an abstract class.
 abstract(cls)
 ```
 
-Abstract classes are classes that cannot themselves be instantiates, but
-can be extended and instantiated.
+Abstract classes are classes that cannot themselves be instantiated, but
+can be extended and instantiated. An abstract class can contain any number
+of abstract methods. When an abstract class is extended, the extending
+class _must_ override all the abstract methods or else declare itself
+abstract.
 
 ##### Example
 ```python
@@ -85,7 +180,7 @@ from yuppy import Object, abstract
 @abstract
 class Apple(Object):
   """An abstract apple."""
-  weight = protected(float)
+  weight = var(float)
 
   def get_weight(self):
     return self.weight
