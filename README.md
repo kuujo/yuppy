@@ -17,16 +17,16 @@ designed to fit with the Python development culture, not circumvent it.
 -------------------
 1. [Introduction](#but-type-checking-is-bad)
 1. [Class Decorators](#class-decorators)
-   * [The Yuppy Decorator](#yuppy)
+   * [The Yuppy Decorator](#yuppy-1)
    * [Abstract Classes](#abstract)
    * [Final Classes](#final)
 1. [Member Decorators](#member-decorators)
-   * [Constant Attributes](#constant)
-   * [Variable Attributes](#variable)
+   * [Constants](#constant)
+   * [Variables](#variable)
    * [Static Variables](#static)
    * [Methods](#method)
-   * [Abstract Methods](#abstract-2)
-   * [Final Methods](#final-2)
+   * [Abstract Methods](#abstract-1)
+   * [Final Methods](#final-1)
    * [Type Validation](#type-validation)
 1. [Interfaces](#interfaces)
    * [Interfaces](#interface)
@@ -44,9 +44,6 @@ object walks and talks like a duck.
 
 
 ## Class Decorators
-Yuppy primarily uses decorators to decorate classes and thus hide
-otherwise public class attributes.
-
 
 ### yuppy
 Declares a Yuppy class definition.
@@ -168,15 +165,10 @@ Creates a static attribute.
 Static Yuppy members are equivalent to standard Python class members. This is
 essentially the same parallel that exists between Python's class members
 and static variables in many other object-oriented languages. With Yuppy we
-can use the `static` decorator to create static methods or properties. Note
-that `static` members can be further decorated with `public`, `private`,
-or `protected`.
+can use the `static` decorator to create static methods or properties.
 
-Note that if an attribute (`var`, `const`, or `method`) is not passed as
-the first argument, this decorator will create a public static `method`
-if the argument is a `FunctionType`, or `var` otherwise.
 ```
-static([value=None[, default=None[, validate=None[, *types]]]])
+static([default=None[, validate=None[, *types]]])
 ```
 
 ##### Example
@@ -206,7 +198,7 @@ None
 ```
 
 ### constant
-Creates a public constant attribute.
+Creates a constant attribute.
 
 Constants are attributes which have a permanent value. They can be used for
 any value which should never change within the application, such as an
@@ -249,7 +241,7 @@ AttributeError: Cannot override 'Apple' attribute 'color' by assignment.
 ```
 
 ### method
-Creates a public method attribute.
+Creates a method attribute.
 ```
 method(callback)
 ```
