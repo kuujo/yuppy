@@ -41,6 +41,11 @@ class Method(Object):
   def foo(self):
     return 'bar'
 
+class MethodParams(Object):
+  @params(foo=int, bar=basestring)
+  def foobarbaz(self, foo, bar=None):
+    pass
+
 class MethodTestCase(unittest.TestCase):
   """
   Method test case.
@@ -48,6 +53,16 @@ class MethodTestCase(unittest.TestCase):
   def test_method(self):
     instance = Method()
     self.assertEquals(instance.foo(), 'bar')
+
+  def test_params(self):
+    instance = MethodParams()
+    self.assertRaises(TypeError, instance.foobarbaz, 'one')
+    self.assertRaises(TypeError, instance.foobarbaz, 1, 2)
+    self.assertRaises(TypeError, instance.foobarbaz, foo='one')
+    self.assertRaises(TypeError, instance.foobarbaz, foo=1, bar=2)
+    instance.foobarbaz(1, 'two')
+    instance.foobarbaz(foo=1, bar='two')
+    instance.foobarbaz(1, bar='two')
 
 class StaticVariable(Object):
   foo = static(type=int, validate=lambda x: x == 1)
