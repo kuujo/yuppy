@@ -274,12 +274,8 @@ def param(*args, **kwargs):
     if not isinstance(meth, Method):
       meth = method(meth)
     if arglen == 1:
-      if meth.__args__ is None:
-        meth.__args__ = []
       meth.__args__.insert(0, args[0])
     elif kwarglen == 1:
-      if meth.__kwargs__ is None:
-        meth.__kwargs__ = {}
       meth.__kwargs__ = dict(meth.__kwargs__.items() + kwargs.items())
     return meth
   return wrap
