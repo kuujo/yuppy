@@ -220,13 +220,17 @@ class Method(Attribute):
   """
   def __init__(self, method):
     self.__method__ = method
+    self.__method__.__spec__ = inspect.getargspec(self.__method__)
     self.__params__ = None
 
   def __get__(self, instance=None, owner=None):
     """Gets the method, applying type hinting to method arguments."""
     if self.__params__ is None:
       return MethodType(self.__method__, instance)
-    posargs, varargs, keywords, defaults = inspect.getargspec(self.__method__)
+    try:
+      posargs, varargs, keywords, defaults = self.__method__.__spec__
+    except AttributeError:
+      posargs, varargs, keywords, defaults = inspect.getargspec(self.__method__)
     posargs = posargs[1:]
     def wrap(inst, *args, **kwargs):
       for i in range(len(posargs)):
@@ -234,15 +238,17 @@ class Method(Attribute):
           self.__params__[posargs[i]]
         except KeyError:
           continue
-        # Try to find the parameter in positional arguments.
         try:
-          self.__validate_argument(posargs[i], args[i], self.__params__[posargs[i]])
+          arg = args[i]
         except IndexError:
-          # Try to find the parameter in keyword arguments.
           try:
-            self.__validate_argument(posargs[i], kwargs[posargs[i]], self.__params__[posargs[i]])
+            arg = kwargs[posargs[i]]
           except KeyError:
             pass
+          else:
+            self.__validate_argument(posargs[i], arg, self.__params__[posargs[i]])
+        else:
+          self.__validate_argument(posargs[i], arg, self.__params__[posargs[i]])
       return self.__method__(inst, *args, **kwargs)
     return MethodType(wrap, instance)
 
@@ -250,12 +256,18 @@ class Method(Attribute):
     """
     Validates an argument value.
     """
-    if isinterface(type) and not instanceof(value, type):
-      raise TypeError("Method argument '%s' must be an implementation of '%s'." % (name, type.__name__))
-    elif not isinstance(value, type):
-      raise TypeError("Method argument '%s' must be an instance of '%s'." % (name, type))
-    if not instanceof(value, type):
-      raise TypeError("Method argument '%s' must implement the same interface as %s." % (name, type))
+    if isinstance(value, type):
+      return True
+    if isinterface(type):
+      if instanceof(value, type):
+        return True
+      else:
+        raise TypeError("Method argument '%s' must be an implementation of '%s'." % (name, type.__name__))
+    else:
+      if instanceof(value, type):
+        return True
+      else:
+        raise TypeError("Method argument '%s' must implement the same interface as %s." % (name, type))
 
 def params(**kwargs):
   """
