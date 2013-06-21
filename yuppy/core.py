@@ -394,15 +394,15 @@ class ClassType(StaticType):
   A yuppy class type.
   """
   def __init__(cls, name, bases, attrs):
-    def get_init_wrapper(new):
+    def get_init_wrapper(init):
       def wrapped(self, *args, **kwargs):
         if isabstract(self.__class__):
           raise TypeError("Cannot instantiate abstract class '%s'." % (self.__class__.__name__,))
-        new(self, *args, **kwargs)
+        init(self, *args, **kwargs)
       return wrapped
 
     if not attrs.has_key('__init__'):
-      init = lambda self, *args, **kwargs: None
+      init = lambda self, *args, **kwargs: super(self.__class__, self).__init__(*args, **kwargs)
     else:
       init = attrs['__init__']
     cls.__init__ = get_init_wrapper(init)
