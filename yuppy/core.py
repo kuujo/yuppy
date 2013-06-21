@@ -524,11 +524,11 @@ def instanceof(obj, interface, ducktype=True):
     for i in interface:
       for base in i.__mro__:
         for attrname, attr in base.__dict__.items():
-          if isinstance(getattr(base, attrname), FunctionType):
+          if isinstance(getattr(base, attrname), (MethodType, FunctionType)):
             notempty = True
             if not hasattr(obj, attrname):
               return False
-            elif not isinstance(getattr(obj, attrname), FunctionType):
+            elif not isinstance(getattr(obj, attrname), (MethodType, FunctionType)):
               return False
     return notempty
   else:
