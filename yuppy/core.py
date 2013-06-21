@@ -514,25 +514,33 @@ def instanceof(obj, interface, ducktype=True):
   """
   Indicates whether the given object is an instance of the given interface.
   """
-  if ducktype:
-    for base in interface.__mro__:
-      for attrname, attr in base.__dict__.items():
-        if isinstance(getattr(base, attrname), FunctionType):
-          if not hasattr(obj, attrname):
-            return False
-          elif not isinstance(getattr(obj, attrname), FunctionType):
-            return False
+  if isinstance(obj, interface):
     return True
+  if not isinstance(interface, (list, tuple)):
+    interface = (interface,)
+
+  if ducktype:
+    notempty = False
+    for i in interface:
+      for base in i.__mro__:
+        for attrname, attr in base.__dict__.items():
+          if isinstance(getattr(base, attrname), FunctionType):
+            notempty = True
+            if not hasattr(obj, attrname):
+              return False
+            elif not isinstance(getattr(obj, attrname), FunctionType):
+              return False
+    return notempty
   else:
-    if isinstance(obj, interface):
-      return True
-    try:
-      if interface in obj.__interfaces__:
-        return True
-      else:
+    for i in interface:
+      try:
+        if i in obj.__interfaces__:
+          return True
+        else:
+          return False
+      except AttributeError:
         return False
-    except AttributeError:
-      return False
+    return False
 
 def implements(interface):
   """
