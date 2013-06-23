@@ -514,6 +514,8 @@ def instanceof(obj, interface, ducktype=True):
   """
   Indicates whether the given object is an instance of the given interface.
   """
+  if interface is callable:
+    return callable(obj)
   if isinstance(obj, interface):
     return True
   if not isinstance(interface, (list, tuple)):
