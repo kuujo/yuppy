@@ -377,14 +377,14 @@ class StaticType(type):
 
   def __setattr__(cls, name, value):
     """Prevents overriding explicitly set attributes."""
-    if isinstance(name, basestring) and not (name.startswith('__') and name.endswith('__')):
+    if isinstance(name, basestring) and not _isinternal(name):
       if isattribute(cls._findattr(name, None)):
         raise AttributeError("Cannot override '%s' attribute '%s' by assignment." % (cls.__name__, name))
     super(StaticType, cls).__setattr__(name, value)
 
   def __delattr__(cls, name):
     """Prevents deleting explicitly set attributes."""
-    if isinstance(name, basestring) and not (name.startswith('__') and name.endswith('__')):
+    if isinstance(name, basestring) and not _isinternal(name):
       if isattribute(cls._findattr(name, None)):
         raise AttributeError("Cannot delete '%s' attribute '%s'." % (cls.__name__, name))
     super(StaticType, cls).__delattr__(name)
@@ -526,7 +526,7 @@ def instanceof(obj, interface, ducktype=True):
     for i in interface:
       for base in i.__mro__:
         for attrname, attr in base.__dict__.items():
-          if isinstance(getattr(base, attrname), (MethodType, FunctionType)):
+          if not _isinternal(attrname) and isinstance(getattr(base, attrname), (MethodType, FunctionType)):
             notempty = True
             if not hasattr(obj, attrname):
               return False
@@ -566,3 +566,6 @@ def implements(interface):
     Implementation.__name__ = cls.__name__
     return Implementation
   return wrap
+
+def _isinternal(name):
+  return name.startswith('__') and name.endswith('__')
