@@ -402,7 +402,7 @@ class ClassType(StaticType):
       return wrapped
 
     if not attrs.has_key('__init__'):
-      init = lambda self, *args, **kwargs: super(self.__class__, self).__init__(*args, **kwargs)
+      init = lambda self, *args, **kwargs: None
     else:
       init = attrs['__init__']
     cls.__init__ = get_init_wrapper(init)
