@@ -72,6 +72,7 @@ class Variable(Attribute):
         self.__type__ = args[0]
     else:
       self.__type__ = args
+
     try:
       kwargs['default']
     except KeyError:
@@ -80,14 +81,17 @@ class Variable(Attribute):
     else:
       self.__hasdefault__ = True
       self.__default__ = kwargs['default']
+
     try:
       self.__validate__ = kwargs['validate']
     except KeyError:
       self.__validate__ = None
+
     try:
       self.__interface__ = kwargs['interface']
     except KeyError:
       self.__interface__ = None
+
     super(Variable, self).__init__()
 
   def _validate(self, value):
@@ -96,6 +100,7 @@ class Variable(Attribute):
     """
     if self.__interface__ is not None and not instanceof(value, self.__interface__):
       raise AttributeError("Invalid attribute value for '%s'." % (self.__name__,))
+
     if self.__type__ is not None and not isinstance(value, self.__type__):
       if not isinstance(self.__type__, (list, tuple)):
         try:
@@ -108,9 +113,11 @@ class Variable(Attribute):
           return value
       else:
         raise AttributeError("Invalid attribute value for '%s'." % (self.__name__,))
+
     if self.__validate__ is not None:
       if not self.__validate__(value):
         raise AttributeError("Invalid attribute value for '%s'." % (self.__name__,))
+
     return value
 
   def __get__(self, instance=None, owner=None):
@@ -227,17 +234,21 @@ class Method(Attribute):
     """Gets the method, applying type hinting to method arguments."""
     if self.__params__ is None:
       return MethodType(self.__method__, instance)
+
     try:
       posargs, varargs, keywords, defaults = self.__method__.__spec__
     except AttributeError:
       posargs, varargs, keywords, defaults = inspect.getargspec(self.__method__)
+
     posargs = posargs[1:]
+
     def wrap(inst, *args, **kwargs):
       for i in range(len(posargs)):
         try:
           self.__params__[posargs[i]]
         except KeyError:
           continue
+
         try:
           arg = args[i]
         except IndexError:
@@ -249,7 +260,9 @@ class Method(Attribute):
             self.__validate_argument(posargs[i], arg, self.__params__[posargs[i]])
         else:
           self.__validate_argument(posargs[i], arg, self.__params__[posargs[i]])
+
       return self.__method__(inst, *args, **kwargs)
+
     return MethodType(wrap, instance)
 
   def __validate_argument(self, name, value, type):
@@ -258,6 +271,7 @@ class Method(Attribute):
     """
     if isinstance(value, type):
       return True
+
     if instanceof(value, type):
       return True
     else:
@@ -273,10 +287,13 @@ def params(**kwargs):
   def wrap(meth):
     if not isinstance(meth, Method):
       meth = Method(meth)
+
     args = inspect.getargspec(meth.__method__)[0]
+
     for key in kwargs:
       if key not in args:
         raise ValueError("Invalid parameter key '%s'. That parameter was not found." % (key,))
+
     meth.__params__ = kwargs
     return meth
   return wrap
@@ -422,35 +439,44 @@ class ClassType(StaticType):
     for base in cls.__mro__:
       if isfinal(base) and cls is not base:
         raise TypeError("Cannot override final class '%s'." % (base.__name__,))
+
       for attrname, attr in base.__dict__.items():
         if isattribute(attr):
+
           attr.__name__ = attrname
         if isabstract(attr):
           func = cls._findattr(attrname)
+
           try:
             func = func.__method__
           except AttributeError:
             pass
+
           try:
             meth = attr.__method__
           except AttributeError:
             meth = attr
+
           if func is meth:
             class_isabstract = True
+
         if base is not cls and isfinal(attr):
           func = cls._findattr(attrname)
           try:
             func = func.__method__
           except AttributeError:
             pass
+
           try:
             func = func.im_func
           except AttributeError:
             pass
+
           try:
             meth = attr.__method__
           except AttributeError:
             meth = attr
+
           if func is not meth:
             raise TypeError("Cannot override final '%s' method '%s'." % (base.__name__, attrname))
 
@@ -485,10 +511,13 @@ class InterfaceType(StaticType):
     for attrname, attr in attrs.items():
       if isattribute(attr):
         attr.__name__ = attrname
+
       if not attrname.startswith('_') and isinstance(attr, FunctionType):
         attrs[attrname] = AbstractMethod(attr)
+
     def initializer(cls, *args, **kwargs):
       raise TypeError("Cannot instantiate interface '%s'." % (cls.__name__,))
+
     cls.__new__ = MethodType(initializer, cls)
     super(InterfaceType, cls).__init__(name, bases, attrs)
 
@@ -516,8 +545,10 @@ def instanceof(obj, interface, ducktype=True):
   """
   if interface is callable:
     return callable(obj)
+
   if isinstance(obj, interface):
     return True
+
   if not isinstance(interface, (list, tuple)):
     interface = (interface,)
 
@@ -555,12 +586,15 @@ def implements(interface):
   def wrap(cls):
     if not isyuppyclass(cls):
       cls = yuppy(cls)
+
     try:
       cls.__interfaces__
     except AttributeError:
       cls.__interfaces__ = []
+
     if interface not in cls.__interfaces__:
       cls.__interfaces__.append(interface)
+
     class Implementation(cls):
       pass
     Implementation.__name__ = cls.__name__
